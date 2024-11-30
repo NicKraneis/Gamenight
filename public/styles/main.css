@@ -1,0 +1,466 @@
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+}
+
+body {
+    min-height: 90vh;
+    background-image: radial-gradient(circle, #411c46, #341c3f, #281a36, #1e172c, #161422, #13121d, #100f19, #0c0c14, #0c0c14, #0c0c14, #0c0c14, #0c0c14);
+}
+
+h1, h2, h3, h4 {
+    color: white;
+    font-family: 'Bricolage Grotesque';
+    font-weight: 500;
+    padding: 0;
+    margin: 0;
+}
+
+h1 {
+    font-family:'Monigue';
+    color: white;
+    font-size: 80px;
+    font-weight: normal;
+    margin-bottom: 50px;
+}
+
+h2 {
+    font-family:'Monigue';
+    color: white;
+    font-size: 40px;
+    font-weight: normal;
+}
+
+.log-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+    grid-gap: 20px;
+}
+
+.log-button {
+    height: 50px;
+    width: auto;
+    background-color:#f2388f;
+	border-radius:42px;
+	border:1px solid #a7185d98;
+	display:inline-block;
+	cursor:pointer;
+	color:#ffffff;
+	font-family: 'Bricolage Grotesque';
+	font-size:21px;
+	padding:12px 54px;
+	text-decoration:none;
+    transition: all 0.2s;
+}
+
+.log-button:hover{
+    background-color:#f2388f;
+    box-shadow: 0px 0px 20px 0px #f2388f;
+}
+
+.log-button1 {
+    height: 50px;
+    width: auto;
+    background-color:#F2D43D;
+	border-radius:42px;
+	border:1px solid #8f7b1a85;
+	display:inline-block;
+	cursor:pointer;
+	color:#ffffff;
+	font-family:'Bricolage Grotesque';
+	font-size:21px;
+	padding:12px 54px;
+	text-decoration:none;
+    transition: all 0.2s;
+}
+
+.log-button1:hover{
+    background-color:#F2D43D;
+    box-shadow: 0px 0px 20px 0px #F2D43D;
+}
+
+.log-field {
+    background-color: #1b1b2c;
+    border-radius: 42px;
+    border-style: solid;
+    border-color: #3c3c5098;
+    color: white;
+    padding-left: 20px;
+}
+
+.log-field::placeholder {
+    font-family: 'Bricolage Grotesque';
+    color: #3c3c50;
+    opacity: 1; /* Firefox */
+  }
+  
+.log-field::-ms-input-placeholder { /* Edge 12 -18 */
+font-family: 'Bricolage Grotesque';
+color: #3c3c50;
+opacity: 1;
+}
+
+/* Container und Layout */
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 40px;
+}
+
+.game-section {
+    display: none;
+    margin: 20px 0;
+    padding: 20px;
+
+}
+
+.inner-container{
+    background-color: #1b1b2caf;
+    border-radius: 30px;
+    border-width: 2px;
+    border-color: #5454857c;
+    border-style: solid;
+}
+
+#gamemaster-section{
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 150px auto auto;
+    grid-gap: 20px;
+    text-align: center;
+}
+
+.gamemaster-section .gm-controls {
+    grid-column-start: 1;
+    grid-column-end: 2;
+    grid-row-start: 1;
+    grid-row-start: 2;
+}
+
+.gamemaster-section .buzzer-status {
+    grid-column-start: 2;
+    grid-column-end: 3;
+    grid-row-start: 1;
+    grid-row-start: 2;
+}
+
+.gamemaster-note-section {
+    grid-column-start: 2;
+    grid-column-end: 3;
+    grid-row-start: 2;
+}
+
+.spieler-textfelder {
+    grid-column-start: 1;
+    grid-column-end: 2;
+    grid-row-start: 2;
+}
+
+#gamemaster-message {
+    white-space: pre-wrap;
+    text-wrap: wrap;
+}
+
+
+/* Leaderboard Styles */
+.leaderboard {
+    background-color: #1b1b2caf;
+    border-radius: 30px;
+    border-width: 2px;
+    border-color: #5454857c;
+    border-style: solid;
+    padding: 15px;
+    margin: 20px 0;
+}
+
+.leaderboard-item {
+    display: flex;
+    align-items: center;
+    padding: 10px;
+    margin: 5px 0;
+    border-radius: 4px;
+    background: rgb(84,84,133);
+    background: -moz-linear-gradient(90deg, rgba(84,84,133,1) 7%, rgba(0,0,0,0) 100%);
+    background: -webkit-linear-gradient(90deg, rgba(84,84,133,1) 7%, rgba(0,0,0,0) 100%);
+    background: linear-gradient(90deg, rgba(84,84,133,1) 7%, rgba(0,0,0,0) 100%);
+    filter: progid:DXImageTransform.Microsoft.gradient(startColorstr="#545485",endColorstr="#000000",GradientType=1);
+}
+
+.rank {
+    font-family: 'Monigue';
+    width: 30px;
+    color: white;
+}
+
+.player-name {
+    font-family: 'Bricolage Grotesque';
+    font-weight: 300;
+    flex-grow: 1;
+    color: white;
+}
+
+.player-points {
+    font-family: 'Bricolage Grotesque';
+    font-weight: 700;
+    margin: 0 10px;
+    color: white;
+}
+
+/* Ranking Colors */
+.rank-1 { 
+    background: rgb(187,160,45);
+    background: -moz-linear-gradient(90deg, rgba(187,160,45,1) 7%, rgba(0,0,0,0) 100%);
+    background: -webkit-linear-gradient(90deg, rgba(187,160,45,1) 7%, rgba(0,0,0,0) 100%);
+    background: linear-gradient(90deg, rgba(187,160,45,1) 7%, rgba(0,0,0,0) 100%);
+    filter: progid:DXImageTransform.Microsoft.gradient(startColorstr="#bba02d",endColorstr="#000000",GradientType=1);
+}
+.rank-2 { 
+    background: rgb(117,134,144);
+    background: -moz-linear-gradient(90deg, rgba(117,134,144,1) 7%, rgba(0,0,0,0) 100%);
+    background: -webkit-linear-gradient(90deg, rgba(117,134,144,1) 7%, rgba(0,0,0,0) 100%);
+    background: linear-gradient(90deg, rgba(117,134,144,1) 7%, rgba(0,0,0,0) 100%);
+    filter: progid:DXImageTransform.Microsoft.gradient(startColorstr="#758690",endColorstr="#000000",GradientType=1);
+}
+.rank-3 { 
+    background: rgb(186,120,84);
+    background: -moz-linear-gradient(90deg, rgba(186,120,84,1) 7%, rgba(0,0,0,0) 100%);
+    background: -webkit-linear-gradient(90deg, rgba(186,120,84,1) 7%, rgba(0,0,0,0) 100%);
+    background: linear-gradient(90deg, rgba(186,120,84,1) 7%, rgba(0,0,0,0) 100%);
+    filter: progid:DXImageTransform.Microsoft.gradient(startColorstr="#ba7854",endColorstr="#000000",GradientType=1);
+}
+
+/* Controls */
+.point-controls button {
+    font-family: 'Bricolage Grotesque';
+    font-weight: 300;
+    margin: 0 5px;
+    padding: 10px;
+    color: white;
+    display: flex;
+    gap: 5px;
+    background-color:#2a2a42;
+    border-radius:10px;
+    border:1px solid #5454857c;
+    display:inline-block;
+    cursor:pointer;
+    text-decoration:none;
+
+}
+
+.point-controls button:hover{
+    background-color:#2a2a42;
+    box-shadow: 0px 0px 10px 0px #5454859a;
+}
+
+/* Notes Styles */
+.player-notes {
+    margin: 20px 0;
+}
+
+.note-field {
+    width: 100%;
+    min-height: 100px;
+    margin: 10px 0;
+    padding: 10px;
+    resize: vertical;
+    font-family: 'Bricolage Grotesque';
+    background-color: #2a2a42;
+    border-radius: 10px;
+    border-width: 1px;
+    border-style: solid;
+    border-color: #5454857c;
+    color: white;
+}
+
+.note-field::placeholder {
+    font-family: 'Bricolage Grotesque';
+    color: #64647e;
+    opacity: 1; /* Firefox */
+}
+  
+.note-field::-ms-input-placeholder { /* Edge 12 -18 */
+    font-family: 'Bricolage Grotesque';
+    color: #64647e;
+    opacity: 1;
+}
+
+.player-note-container {
+    text-align: start;
+    padding: 15px;
+    margin: 0;
+    border-radius: 4px;
+    border-width: 1px;
+    border-color: #2a2a42;
+}
+
+.player-note-header {
+    color: white;
+    font-family: 'Bricolage Grotesque';
+    margin-bottom: 5px;
+}
+
+.gm-button {
+    height: 50px;
+    width: auto;
+    background-color:#2a2a42;
+	border-radius:42px;
+	border:1px solid #5454857c;
+	display:inline-block;
+	cursor:pointer;
+	color:#ffffff;
+	font-family:'Bricolage Grotesque';
+	font-size:14px;
+	text-decoration:none;
+    transition: all 0.2s;
+    margin-top: 10px;
+    padding: 10px 30px;
+}
+
+.gm-button:hover{
+    background-color:#2a2a42;
+    box-shadow: 0px 0px 20px 0px #545485;
+}
+
+/* Utility Classes */
+.hidden {
+    display: none;
+}
+
+
+#player-section.game-section {
+    grid-template-columns: 49% auto;
+    grid-template-rows: auto auto;
+    grid-gap: 20px;
+    text-align: center;
+}
+
+#gamemaster-message.note-field {
+    text-align: start;
+}
+
+#current-buzzer {
+    margin-top: 10px;
+}
+
+.buzzer-free {
+    background-color: #2a2a42;
+    font-family: 'Bricolage grotesque';
+    color: white;
+    padding: 10px;
+    border-radius: 40px;
+}
+
+.buzzer {
+    background-color: #F2388F;
+    font-family: 'Monigue';
+    font-size: 50px;
+    color: white;
+    padding: 10px;
+    margin: 20px;
+    border-radius: 100px;
+    grid-column-start: 1;
+    grid-column-end: 3;
+    border-width: 0;
+    height: 200px;
+}
+
+.buzzer-pressed {
+    background-color: #16D866;
+    font-family: 'Bricolage grotesque';
+    color: white;
+    padding: 10px;
+    border-radius: 40px;
+}
+
+.buzzer-winner {
+    background-color: #16D866;
+    box-shadow: 0px 0px 20px 0px #16D866;
+    cursor: not-allowed;
+}
+
+.buzzer-active {
+    background-color: #F2388F;
+    transition: all 0.2s;
+    cursor: pointer;
+}
+
+.buzzer-active:hover {
+    box-shadow: 0px 0px 20px 0px #F2388F;
+}
+
+.buzzer-disabled {
+    background-color: #2a2a42;
+    cursor: not-allowed;
+}
+
+.buzzer-timestamp {
+    font-family: 'Bricolage grotesque';
+    color: white;
+    font-size: 12px;
+}
+
+@font-face {
+    font-family: 'Monigue';
+    src: url('../assets/fonts/Monigue.woff2');
+    font-weight: normal;
+    font-style: normal;
+}
+
+/* bricolage-grotesque-200 - latin */
+@font-face {
+    font-display: swap; /* Check https://developer.mozilla.org/en-US/docs/Web/CSS/@font-face/font-display for other options. */
+    font-family: 'Bricolage Grotesque';
+    font-style: normal;
+    font-weight: 200;
+    src: url('../assets/fonts/bricolage-grotesque-v7-latin-200.woff2') format('woff2'); /* Chrome 36+, Opera 23+, Firefox 39+, Safari 12+, iOS 10+ */
+  }
+  /* bricolage-grotesque-300 - latin */
+  @font-face {
+    font-display: swap; /* Check https://developer.mozilla.org/en-US/docs/Web/CSS/@font-face/font-display for other options. */
+    font-family: 'Bricolage Grotesque';
+    font-style: normal;
+    font-weight: 300;
+    src: url('../assets/fonts/bricolage-grotesque-v7-latin-300.woff2') format('woff2'); /* Chrome 36+, Opera 23+, Firefox 39+, Safari 12+, iOS 10+ */
+  }
+  /* bricolage-grotesque-regular - latin */
+  @font-face {
+    font-display: swap; /* Check https://developer.mozilla.org/en-US/docs/Web/CSS/@font-face/font-display for other options. */
+    font-family: 'Bricolage Grotesque';
+    font-style: normal;
+    font-weight: 400;
+    src: url('../assets/fonts/bricolage-grotesque-v7-latin-regular.woff2') format('woff2'); /* Chrome 36+, Opera 23+, Firefox 39+, Safari 12+, iOS 10+ */
+  }
+  /* bricolage-grotesque-500 - latin */
+  @font-face {
+    font-display: swap; /* Check https://developer.mozilla.org/en-US/docs/Web/CSS/@font-face/font-display for other options. */
+    font-family: 'Bricolage Grotesque';
+    font-style: normal;
+    font-weight: 500;
+    src: url('../assets/fonts/bricolage-grotesque-v7-latin-500.woff2') format('woff2'); /* Chrome 36+, Opera 23+, Firefox 39+, Safari 12+, iOS 10+ */
+  }
+  /* bricolage-grotesque-600 - latin */
+  @font-face {
+    font-display: swap; /* Check https://developer.mozilla.org/en-US/docs/Web/CSS/@font-face/font-display for other options. */
+    font-family: 'Bricolage Grotesque';
+    font-style: normal;
+    font-weight: 600;
+    src: url('../assets/fonts/bricolage-grotesque-v7-latin-600.woff2') format('woff2'); /* Chrome 36+, Opera 23+, Firefox 39+, Safari 12+, iOS 10+ */
+  }
+  /* bricolage-grotesque-700 - latin */
+  @font-face {
+    font-display: swap; /* Check https://developer.mozilla.org/en-US/docs/Web/CSS/@font-face/font-display for other options. */
+    font-family: 'Bricolage Grotesque';
+    font-style: normal;
+    font-weight: 700;
+    src: url('../assets/fonts/bricolage-grotesque-v7-latin-700.woff2') format('woff2'); /* Chrome 36+, Opera 23+, Firefox 39+, Safari 12+, iOS 10+ */
+  }
+  /* bricolage-grotesque-800 - latin */
+  @font-face {
+    font-display: swap; /* Check https://developer.mozilla.org/en-US/docs/Web/CSS/@font-face/font-display for other options. */
+    font-family: 'Bricolage Grotesque';
+    font-style: normal;
+    font-weight: 800;
+    src: url('../assets/fonts/bricolage-grotesque-v7-latin-800.woff2') format('woff2'); /* Chrome 36+, Opera 23+, Firefox 39+, Safari 12+, iOS 10+ */
+  }

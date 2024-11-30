@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Game Night</title>
+        <script src="/socket.io/socket.io.js"></script>
+        <link rel="stylesheet" href="/styles/main.css">
+        <script src="/js/main.js" defer></script>
+    </head>
+<body>
+    <div class="container">
+        <!-- Startbereich -->
+        <div id="start-section">
+            <h1>Welcome to the <br> Game Night</h1>
+            <div class="log-grid">
+                <input class="log-field" type="text" id="player-name" placeholder="Your Name">
+                <button class="log-button" id="create-room">Create room</button>
+                <input class="log-field" type="text" id="room-code" placeholder="Room Code">
+                <button class="log-button1" id="join-room">Join room</button>
+            </div>
+        </div>
+
+        <!-- Spielbereich -->
+        <div id="game-section" class="game-section">
+            <h2>Room: <span id="current-room"></span></h2>
+
+            <!-- Leaderboard (für alle sichtbar) -->
+            <div class="leaderboard" id="leaderboard">
+                <h3>Leaderboard</h3>
+            </div>
+            
+            <!-- Im gamemaster-section div -->
+            <div id="gamemaster-section" class="game-section inner-container">
+                <div class="gm-controls">
+                    <h3>Buzzer Controls</h3>
+                    <button class="gm-button" id="release-buzzers">Buzzer Release</button>
+                    <button class="gm-button" id="lock-buzzers">Buzzer Lock</button>
+                </div>
+                
+                
+                <!-- Neue Buzzer-Status Anzeige -->
+                 <div id="buzzer-status" class="buzzer-status">
+                    <h3>Buzzer Status</h3>
+                    <div id="current-buzzer"></div>
+                </div>
+                
+                
+                <div class="gamemaster-note-section">
+                    <h3>Your message to the players</h3>
+                    <textarea 
+                        id="gamemaster-note" 
+                        class="note-field" 
+                        placeholder="Write a message to your players..."
+                        oninput="updateGamemasterNote(this.value)"></textarea>
+                </div>
+                
+                <!-- Wichtig: Diese Struktur muss genau so sein -->
+                <div id="showmaster-notes" class="spieler-textfelder">
+                    <h3>Player texts</h3>
+                    <div id="all-player-notes">
+                        <!-- Hier werden die Notizen eingefügt -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Spieler Bereich -->
+            <div id="player-section" class="game-section  inner-container">
+                <button id="buzzer" class="buzzer">BUZZ</button>
+                
+                
+                <!-- Bei den Spielern: Anzeige der Gamemaster-Nachricht -->
+                <div class="gamemaster-message">
+                    <h3>Showmaster:</h3>
+                    <div id="gamemaster-message" class="note-field" readonly></div>
+                </div>
+                    
+                
+                <!-- Spieler Textfeld -->
+                <div id="player-note-section">
+                    <h3>Your text</h3>
+                    <textarea 
+                        id="player-note" 
+                        class="note-field" 
+                        placeholder="Your notes..."></textarea>
+                </div>
+            </div>
+
+            <!-- Buzzer Benachrichtigungen -->
+            <div id="buzz-notifications"></div>
+        </div>
+    </div>
+</body>
+</html>
