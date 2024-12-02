@@ -4,6 +4,8 @@ const http = require("http");
 const rateLimit = require("express-rate-limit");
 const helmet = require("helmet");
 require("dotenv").config();
+const fs = require('fs');
+const path = require('path');
 
 // Rate Limiter konfigurieren
 const limiter = rateLimit({
@@ -49,6 +51,21 @@ process.on("uncaughtException", (error) => {
 process.on("unhandledRejection", (error) => {
   console.error("Unhandled Rejection:", error);
 });
+
+
+// Namen aus JSON laden
+let randomNames = [];
+try {
+    const namesData = fs.readFileSync(path.join(__dirname, 'public/assets/data/random-names.json'));
+    randomNames = JSON.parse(namesData).names;
+} catch (error) {
+    console.error('Error loading random names:', error);
+    randomNames = ["Player"]; // Fallback
+}
+
+function getRandomName() {
+    return randomNames[Math.floor(Math.random() * randomNames.length)];
+}
 
 // Room Management
 const rooms = {};
@@ -136,27 +153,32 @@ io.on("connection", (socket) => {
 
   socket.on("join-room", (data) => {
     try {
-      if (!data?.roomCode || !data?.playerName?.trim()) {
-        throw new Error("Invalid room code or player name");
+        if (!data?.roomCode) {
+          throw new Error('Invalid room code');
       }
 
       const room = rooms[data.roomCode];
       if (!room) {
-        throw new Error("Room does not exist");
+          throw new Error('Room does not exist');
       }
 
-      // Spieler-Limit Check (z.B. 8 Spieler)
       const playerCount = Object.keys(room.players).length;
       if (playerCount >= 12) {
-        throw new Error("Room is full (max 12 players)");
+          throw new Error('Room is full (max 12 players)');
       }
+
+      // Zufälliger Name wenn leer oder nur Leerzeichen
+      const playerName = data.playerName?.trim() 
+          ? data.playerName.trim() 
+          : getRandomName();
 
       currentRoom = data.roomCode;
       room.players[socket.id] = {
-        id: socket.id,
-        name: data.playerName,
-        points: 0,
-        isHost: false,
+          id: socket.id,
+          name: playerName,  // Hier wird der zufällige Name verwendet
+          points: 0,
+          isHost: false,
+          avatarId: data.avatarId
       };
 
       // Notiz initialisieren

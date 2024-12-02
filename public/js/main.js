@@ -3,10 +3,30 @@ let isGamemaster = false;
 let currentRoomCode = null;
 let playerName = "";
 let timerInterval = null;
+let currentAvatarId = 1;
+let soundEnabled = true;
 
 function showGameInterface(roomCode, asGamemaster) {
   currentRoomCode = roomCode;
   document.getElementById("current-room").textContent = roomCode;
+  const roomCodeElement = document.getElementById("current-room");
+  roomCodeElement.textContent = roomCode;
+  
+  // Click-Handler für Copy-Funktion
+  roomCodeElement.addEventListener('click', async () => {
+      try {
+          await navigator.clipboard.writeText(roomCode);
+          
+          // Optional: Visuelle Bestätigung
+          roomCodeElement.textContent = "Copied!";
+          setTimeout(() => {
+              roomCodeElement.textContent = roomCode;
+          }, 1000);
+      } catch (err) {
+          console.error('Failed to copy:', err);
+      }
+  });
+
   document.getElementById("start-section").style.display = "none";
   document.getElementById("game-section").style.display = "grid";
 
@@ -62,116 +82,199 @@ function updatePoints(playerId, points) {
 
 // Event Listeners
 document.addEventListener("DOMContentLoaded", () => {
-  const gamemasterNote = document.getElementById("gamemaster-note");
-  if (gamemasterNote) {
-    gamemasterNote.addEventListener("input", (e) => {
-      updateGamemasterNote(e.target.value);
-    });
+
+  // Sound Toggle
+  const soundToggle = document.getElementById('toggle-sound');
+  if (soundToggle) {
+      soundToggle.addEventListener('click', () => {
+          soundEnabled = !soundEnabled;
+          
+          // Update Button
+          const icon = soundToggle.querySelector('.sound-icon');
+          const srText = soundToggle.querySelector('.visually-hidden');
+          
+          icon.textContent = soundEnabled ? '🔊' : '🔈';
+          srText.textContent = soundEnabled ? 'Sound is on' : 'Sound is off';
+          soundToggle.setAttribute('aria-checked', soundEnabled);
+      });
   }
 
-  // Raum erstellen
-  document.getElementById("create-room").addEventListener("click", () => {
-    playerName = document.getElementById("player-name").value || "Showmaster";
-    socket.emit("create-room", { playerName });
-    isGamemaster = true;
-  });
 
-  // Raum beitreten
-  document.getElementById("join-room").addEventListener("click", () => {
-    playerName = document.getElementById("player-name").value || "Player";
-    const roomCode = document.getElementById("room-code").value.toUpperCase();
-    socket.emit("join-room", { roomCode, playerName });
-    isGamemaster = false;
-  });
+    const gamemasterNote = document.getElementById("gamemaster-note");
+    if (gamemasterNote) {
+      gamemasterNote.addEventListener("input", (e) => {
+        updateGamemasterNote(e.target.value);
+      });
+    }
 
-  // Buzzer
-  document.getElementById("buzzer").addEventListener("click", () => {
-    socket.emit("press-buzzer", {
-      roomCode: currentRoomCode,
-      playerName: playerName,
+    // Raum erstellen
+    document.getElementById("create-room").addEventListener("click", () => {
+      playerName = document.getElementById("player-name").value || "Showmaster";
+      socket.emit("create-room", { playerName });
+      isGamemaster = true;
     });
-  });
 
-  // Buzzer-Kontrollen
-  document.getElementById("release-buzzers").addEventListener("click", () => {
-    socket.emit("release-buzzers", { roomCode: currentRoomCode });
-  });
-
-  document.getElementById("lock-buzzers").addEventListener("click", () => {
-    socket.emit("lock-buzzers", { roomCode: currentRoomCode });
-  });
-
-  const playerNote = document.getElementById("player-note");
-  if (playerNote) {
-    playerNote.addEventListener("input", (e) => {
-      if (!isGamemaster) {
-        socket.emit("update-note", {
-          roomCode: currentRoomCode,
-          text: e.target.value,
-        });
-        console.log("Sending player note:", e.target.value); // Debug
-      }
+    // Raum beitreten
+    document.getElementById('join-room').addEventListener('click', () => {
+      const inputName = document.getElementById('player-name').value;
+      const roomCode = document.getElementById('room-code').value.toUpperCase();
+      socket.emit('join-room', { 
+          roomCode, 
+          playerName: inputName,  // Leerer String möglich
+          avatarId: currentAvatarId
+      });
+      isGamemaster = false;
     });
-  }
 
-  // Timer Controls für Gamemaster
-  function setupTimerControls() {
-    const timerControls = document.getElementById("timer-controls");
-    if (isGamemaster && timerControls) {
-      timerControls.innerHTML = `
-                <button class="timer-btn" data-duration="10">10s</button>
-                <button class="timer-btn" data-duration="30">30s</button>
-                <button class="timer-btn" data-duration="60">60s</button>
-                <button class="timer-reset">Reset</button>
-            `;
+    // Buzzer
+    document.getElementById("buzzer").addEventListener("click", () => {
+      socket.emit("press-buzzer", {
+        roomCode: currentRoomCode,
+        playerName: playerName,
+      });
+    });
 
-      timerControls.querySelectorAll(".timer-btn").forEach((btn) => {
-        btn.addEventListener("click", () => {
-          const duration = parseInt(btn.dataset.duration);
-          socket.emit("start-timer", {
+    // Buzzer-Kontrollen
+    document.getElementById("release-buzzers").addEventListener("click", () => {
+      socket.emit("release-buzzers", { roomCode: currentRoomCode });
+    });
+
+    document.getElementById("lock-buzzers").addEventListener("click", () => {
+      socket.emit("lock-buzzers", { roomCode: currentRoomCode });
+    });
+
+    const playerNote = document.getElementById("player-note");
+    if (playerNote) {
+      playerNote.addEventListener("input", (e) => {
+        if (!isGamemaster) {
+          socket.emit("update-note", {
             roomCode: currentRoomCode,
-            duration: duration,
+            text: e.target.value,
+          });
+          console.log("Sending player note:", e.target.value); // Debug
+        }
+      });
+    }
+
+    // Timer Controls für Gamemaster
+    function setupTimerControls() {
+      const timerControls = document.getElementById("timer-controls");
+      if (isGamemaster && timerControls) {
+        timerControls.innerHTML = `
+                  <button class="timer-btn" data-duration="10">10s</button>
+                  <button class="timer-btn" data-duration="30">30s</button>
+                  <button class="timer-btn" data-duration="60">60s</button>
+                  <button class="timer-reset">Reset</button>
+              `;
+
+        timerControls.querySelectorAll(".timer-btn").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            const duration = parseInt(btn.dataset.duration);
+            socket.emit("start-timer", {
+              roomCode: currentRoomCode,
+              duration: duration,
+            });
           });
         });
-      });
 
-      const resetBtn = timerControls.querySelector(".timer-reset");
-      resetBtn.addEventListener("click", () => {
-        socket.emit("reset-timer", { roomCode: currentRoomCode });
-      });
-    }
-  }
-
-  // Timer Setup bei Interface-Anzeige
-  const originalShowGameInterface = showGameInterface;
-  showGameInterface = function (roomCode, asGamemaster) {
-    originalShowGameInterface(roomCode, asGamemaster);
-    setupTimerControls();
-  };
-
-  document.addEventListener("keydown", (event) => {
-    // Prüfen ob der Fokus auf einem Textfeld liegt
-    if (
-      event.code === "Space" &&
-      !isGamemaster &&
-      !event.target.matches("input, textarea")
-    ) {
-      // Verhindert Auslösung in Textfeldern
-      const buzzer = document.getElementById("buzzer");
-      if (!buzzer.disabled) {
-        socket.emit("press-buzzer", {
-          roomCode: currentRoomCode,
-          playerName: playerName,
+        const resetBtn = timerControls.querySelector(".timer-reset");
+        resetBtn.addEventListener("click", () => {
+          socket.emit("reset-timer", { roomCode: currentRoomCode });
         });
       }
-      event.preventDefault();
+    }
+
+    // Timer Setup bei Interface-Anzeige
+    const originalShowGameInterface = showGameInterface;
+    showGameInterface = function (roomCode, asGamemaster) {
+      originalShowGameInterface(roomCode, asGamemaster);
+      setupTimerControls();
+    };
+
+    document.addEventListener("keydown", (event) => {
+      // Prüfen ob der Fokus auf einem Textfeld liegt
+      if (
+        event.code === "Space" &&
+        !isGamemaster &&
+        !event.target.matches("input, textarea")
+      ) {
+        // Verhindert Auslösung in Textfeldern
+        const buzzer = document.getElementById("buzzer");
+        if (!buzzer.disabled) {
+          socket.emit("press-buzzer", {
+            roomCode: currentRoomCode,
+            playerName: playerName,
+          });
+        }
+        event.preventDefault();
+      }
+  });
+
+  // Avatar Carousel Logik
+  const prevBtn = document.querySelector('.prev');
+  const nextBtn = document.querySelector('.next');
+  const avatarImg = document.getElementById('selected-avatar');
+
+  function updateAvatar(id) {
+      currentAvatarId = id;
+      avatarImg.src = `/assets/img/avatar_${id}.png`;
+      avatarImg.dataset.avatarId = id;
+  }
+
+  prevBtn.addEventListener('click', () => {
+      let newId = currentAvatarId - 1;
+      if (newId < 1) newId = 20;
+      updateAvatar(newId);
+  });
+
+  nextBtn.addEventListener('click', () => {
+      let newId = currentAvatarId + 1;
+      if (newId > 20) newId = 1;
+      updateAvatar(newId);
+  });
+
+  // Avatar-ID beim Raum erstellen/beitreten mitsenden
+  document.getElementById('create-room').addEventListener('click', () => {
+      socket.emit('create-room', { 
+          playerName: playerName,
+          avatarId: currentAvatarId
+      });
+      isGamemaster = true;
+  });
+
+  document.getElementById('join-room').addEventListener('click', () => {
+      socket.emit('join-room', { 
+          roomCode: document.getElementById('room-code').value.toUpperCase(),
+          playerName: playerName,
+          avatarId: currentAvatarId
+      });
+      isGamemaster = false;
+  });
+
+  window.addEventListener('beforeunload', (event) => {
+    if (currentRoomCode) {  // Nur warnen wenn in einem Raum
+        event.preventDefault();
+        // Chrome benötigt returnValue zu setzen
+        event.returnValue = 'Willst du den Raum wirklich verlassen?';
+        return event.returnValue;
     }
   });
+
+
 });
 
 // Socket Events
 socket.on("room-created", (data) => {
   showGameInterface(data.roomCode, true);
+
+  const leaderboard = document.getElementById("leaderboard");
+  leaderboard.innerHTML = "<h3>Leaderboard</h3>";
+
+  const noPlayersDiv = document.createElement("div");
+  noPlayersDiv.className = "waiting-message";  // Neue Klasse hinzufügen
+  noPlayersDiv.textContent = "Waiting for players. Share the room code to invite friends!";
+  leaderboard.appendChild(noPlayersDiv);
+
 });
 
 // In main.js - Leaderboard Erstellung ändern
@@ -186,34 +289,29 @@ socket.on("player-list-update", (players) => {
   const leaderboard = document.getElementById("leaderboard");
   leaderboard.innerHTML = "<h3>Leaderboard</h3>";
 
-  // Hier war möglicherweise der Fehler - wir filtern falsch
+
   const sortedPlayers = Object.values(players)
-    .filter((player) => !player.isHost) // Statt isGamemaster prüfen wir auf isHost
+    .filter((player) => !player.isHost)
     .sort((a, b) => b.points - a.points);
 
-  sortedPlayers.forEach((player, index) => {
-    const playerDiv = document.createElement("div");
-    playerDiv.className = `leaderboard-item ${
-      index < 3 ? "rank-" + (index + 1) : ""
-    }`;
-
-    playerDiv.innerHTML = `
-            <div class="rank">#${index + 1}</div>
-            <div class="player-name">${player.name}</div>
-            <div class="player-points">${player.points} Punkte</div>
-            ${
-              isGamemaster
-                ? `
-                <div class="point-controls">
-                    <button class="plus-button" data-player="${player.id}">+100</button>
-                    <button class="plus-button" data-player="${player.id}">+50</button>
-                    <button class="minus-button" data-player="${player.id}">-50</button>
-                    <button class="minus-button" data-player="${player.id}">-100</button>
-                </div>
-            `
-                : ""
-            }
-        `;
+    sortedPlayers.forEach((player, index) => {
+      const playerDiv = document.createElement('div');
+      playerDiv.className = `leaderboard-item ${index < 3 ? 'rank-' + (index + 1) : ''}`;
+      
+      playerDiv.innerHTML = `
+          <div class="rank">#${index + 1}</div>
+          <img class="player-avatar" src="/assets/img/avatar_${player.avatarId}.png" alt="Avatar">
+          <div class="player-name">${player.name}</div>
+          <div class="player-points">${player.points} Points</div>
+          ${isGamemaster ? `
+              <div class="point-controls">
+                  <button class="plus-button" data-player="${player.id}">+100</button>
+                  <button class="plus-button" data-player="${player.id}">+50</button>
+                  <button class="minus-button" data-player="${player.id}">-50</button>
+                  <button class="minus-button" data-player="${player.id}">-100</button>
+              </div>
+          ` : ''}
+      `;
 
     if (isGamemaster) {
       const plusBtns = playerDiv.querySelectorAll(".plus-button");
@@ -234,16 +332,34 @@ socket.on("player-list-update", (players) => {
 
   if (sortedPlayers.length === 0) {
     const noPlayersDiv = document.createElement("div");
-    noPlayersDiv.textContent = "Noch keine Spieler im Raum";
+    noPlayersDiv.className = "waiting-message";  // Neue Klasse hinzufügen
+    noPlayersDiv.textContent = "Waiting for players. Share the room code to invite friends!";
     leaderboard.appendChild(noPlayersDiv);
-  }
+}
 });
+
+// Sound-Funktionen anpassen
+function playBuzzerSound() {
+  if (!soundEnabled) return;
+  const buzzerSound = document.getElementById('buzzer-sound');
+  if (buzzerSound) {
+      buzzerSound.currentTime = 0;
+      buzzerSound.play();
+  }
+}
+
+function playCountdownSound() {
+  if (!soundEnabled) return;
+  const countdownSound = document.getElementById('countdown-sound');
+  if (countdownSound) {
+      countdownSound.currentTime = 0;
+      countdownSound.play();
+  }
+}
 
 socket.on("buzzer-pressed", (data) => {
   // Buzzer Sound abspielen
-  const buzzerSound = document.getElementById("buzzer-sound");
-  buzzerSound.currentTime = 0; // Zurücksetzen falls der Sound noch läuft
-  buzzerSound.play();
+  playBuzzerSound();
 
   if (isGamemaster) {
     const buzzerStatus = document.getElementById("current-buzzer");
@@ -334,6 +450,7 @@ socket.on("gamemaster-note-update", (note) => {
 
 // Timer Socket Events außerhalb von DOMContentLoaded
 socket.on("timer-started", (data) => {
+  
   let seconds = data.duration;
   updateTimerDisplay(seconds);
 
@@ -359,9 +476,7 @@ function updateTimerDisplay(seconds) {
 
   // Countdown Sound bei 3 Sekunden
   if (seconds === 3) {
-    const countdownSound = document.getElementById("countdown-sound");
-    countdownSound.currentTime = 0;
-    countdownSound.play();
+    playCountdownSound();
   }
 
   // Timer class basierend auf verbleibender Zeit

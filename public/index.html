@@ -14,27 +14,83 @@
           Welcome to the <br />
           Game Night
         </h1>
+
+        
+
         <div class="log-grid">
+
+
+          <!-- JOIN -->
+          <h3 class="join-heading">Join a room</h3>
+
+          <!-- Avatar Selector -->
+          <div class="avatar-selector">
+            <h4>Choose Avatar</h4>
+            <div class="avatar-carousel">
+                <button class="carousel-btn prev">
+                  <i class="arrow left"></i>
+                </button>
+                
+                <div class="avatar-display">
+                    <img id="selected-avatar" src="/assets/img/avatar_1.png" data-avatar-id="1">
+                </div>
+                <button class="carousel-btn next">
+                  <i class="arrow right"></i>
+                </button>
+            </div>
+          </div>
+
           <input
             class="log-field"
             type="text"
             id="player-name"
-            placeholder="Your Name"
-          />
-          <button class="log-button" id="create-room">Create room</button>
+            placeholder="Your Name" />
+
           <input
-            class="log-field"
-            type="text"
-            id="room-code"
-            placeholder="Room Code"
-          />
+          class="log-field"
+          type="text"
+          id="room-code"
+          placeholder="Room Code" />
+
           <button class="log-button1" id="join-room">Join room</button>
+
+
+          <h2 class="or-heading">OR</h2>
+
+
+          <!-- CREATE -->
+
+          <h3 class="create-heading">Create a room</h3>
+
+          <img class="gamemaster-avatar" src="./assets/img/gamemaster_avatar.png" alt="Gamemaster-Avatar">
+
+          <button class="log-button" id="create-room">Create room</button>
+
+          
+          
         </div>
       </div>
 
       <!-- Spielbereich -->
       <div id="game-section" class="game-section">
-        <h2>Room: <span id="current-room"></span></h2>
+
+        <div class="sound-control">
+          <button 
+              id="toggle-sound" 
+              class="sound-toggle" 
+              aria-label="Toggle sounds" 
+              role="switch" 
+              aria-checked="true">
+              <span class="sound-icon">🔊</span>
+              <span class="visually-hidden">Sound is on</span>
+          </button>
+      </div>
+
+
+
+        <h2>Room: <span id="current-room" class="room-code" title="Click to copy"></span>
+
+        </h2>
 
         <!-- Leaderboard (für alle sichtbar) -->
         <div class="leaderboard" id="leaderboard">
@@ -47,9 +103,11 @@
             <div class="gm-controls">
               <h3>Buzzer Controls</h3>
               <button class="gm-button" id="release-buzzers">
-                Buzzer Release
+                Release
               </button>
-              <button class="gm-button" id="lock-buzzers">Buzzer Lock</button>
+              <button class="gm-button" id="lock-buzzers">
+                Lock
+              </button>
             </div>
 
             <!-- Neue Buzzer-Status Anzeige -->
@@ -126,5 +184,12 @@
       src="/assets/sounds/countdown.mp3"
       preload="auto"
     ></audio>
+
+    <footer>
+      <a href="./impressum.html">Impressum © 2024 Nic Kraneis</a>
+
+    </footer>
+
+
   </body>
 </html>
