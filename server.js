@@ -4,8 +4,8 @@ const http = require("http");
 const rateLimit = require("express-rate-limit");
 const helmet = require("helmet");
 require("dotenv").config();
-const fs = require('fs');
-const path = require('path');
+const fs = require("fs");
+const path = require("path");
 
 // Rate Limiter konfigurieren
 const limiter = rateLimit({
@@ -52,24 +52,26 @@ process.on("unhandledRejection", (error) => {
   console.error("Unhandled Rejection:", error);
 });
 
-
 // Namen aus JSON laden
 let randomNames = [];
 try {
-    const namesData = fs.readFileSync(path.join(__dirname, 'public/assets/data/random-names.json'));
-    randomNames = JSON.parse(namesData).names;
+  const namesData = fs.readFileSync(
+    path.join(__dirname, "public/assets/data/random-names.json")
+  );
+  randomNames = JSON.parse(namesData).names;
 } catch (error) {
-    console.error('Error loading random names:', error);
-    randomNames = ["Player"]; // Fallback
+  console.error("Error loading random names:", error);
+  randomNames = ["Player"]; // Fallback
 }
 
 function getRandomName() {
-    return randomNames[Math.floor(Math.random() * randomNames.length)];
+  return randomNames[Math.floor(Math.random() * randomNames.length)];
 }
 
 // Room Management
 const rooms = {};
 
+// Room Management erweitern
 function generateRoomCode() {
   return Math.random().toString(36).substring(2, 8).toUpperCase();
 }
@@ -138,6 +140,7 @@ io.on("connection", (socket) => {
           endTime: null,
           duration: 0,
         },
+        lockedAnswers: new Set(),
       };
 
       currentRoom = roomCode;
@@ -149,42 +152,111 @@ io.on("connection", (socket) => {
       socket.emit("room-error", error.message);
       console.error("Room creation error:", error);
     }
+
+    
+  });
+
+  socket.on("lock-player-answer", (data) => {
+    try {
+      const { roomCode } = data;
+      const room = rooms[roomCode];
+      
+      if (room && room.players[socket.id]) {
+        room.lockedAnswers.add(socket.id);
+        // Setze den Lock-Status auch in den Notizen
+        if (room.notes[socket.id]) {
+          room.notes[socket.id].locked = true;
+        }
+        io.to(roomCode).emit("player-answer-locked", { playerId: socket.id });
+        // Update die Notizen für den Host
+        io.to(room.host).emit("notes-update", room.notes);
+      }
+    } catch (error) {
+      console.error("Lock answer error:", error);
+    }
+  });
+  
+  socket.on("lock-all-answers", (data) => {
+    try {
+      const { roomCode } = data;
+      const room = rooms[roomCode];
+      
+      if (room && room.host === socket.id) {
+        Object.keys(room.players).forEach(playerId => {
+          if (playerId !== room.host) {
+            room.lockedAnswers.add(playerId);
+            // Setze den Lock-Status auch in den Notizen
+            if (room.notes[playerId]) {
+              room.notes[playerId].locked = true;
+            }
+          }
+        });
+        io.to(roomCode).emit("all-answers-locked");
+        // Update die Notizen für den Host
+        io.to(room.host).emit("notes-update", room.notes);
+      }
+    } catch (error) {
+      console.error("Lock all answers error:", error);
+    }
+  });
+  
+  socket.on("unlock-all-answers", (data) => {
+    try {
+      const { roomCode } = data;
+      const room = rooms[roomCode];
+      
+      if (room && room.host === socket.id) {
+        room.lockedAnswers.clear();
+        // Entferne den Lock-Status aus allen Notizen
+        Object.keys(room.notes).forEach(playerId => {
+          if (room.notes[playerId]) {
+            room.notes[playerId].locked = false;
+          }
+        });
+        io.to(roomCode).emit("all-answers-unlocked");
+        // Update die Notizen für den Host
+        io.to(room.host).emit("notes-update", room.notes);
+      }
+    } catch (error) {
+      console.error("Unlock all answers error:", error);
+    }
   });
 
   socket.on("join-room", (data) => {
     try {
-        if (!data?.roomCode) {
-          throw new Error('Invalid room code');
+      if (!data?.roomCode) {
+        throw new Error("Invalid room code");
       }
 
       const room = rooms[data.roomCode];
       if (!room) {
-          throw new Error('Room does not exist');
+        throw new Error("Room does not exist");
       }
 
       const playerCount = Object.keys(room.players).length;
       if (playerCount >= 12) {
-          throw new Error('Room is full (max 12 players)');
+        throw new Error("Room is full (max 12 players)");
       }
 
       // Zufälliger Name wenn leer oder nur Leerzeichen
-      const playerName = data.playerName?.trim() 
-          ? data.playerName.trim() 
-          : getRandomName();
+      const playerName = data.playerName?.trim()
+        ? data.playerName.trim()
+        : getRandomName();
 
       currentRoom = data.roomCode;
       room.players[socket.id] = {
-          id: socket.id,
-          name: playerName,  // Hier wird der zufällige Name verwendet
-          points: 0,
-          isHost: false,
-          avatarId: data.avatarId
+        id: socket.id,
+        name: playerName, // Hier wird der zufällige Name verwendet
+        points: 0,
+        isHost: false,
+        avatarId: data.avatarId,
       };
 
       // Notiz initialisieren
       room.notes[socket.id] = {
         text: "",
-        playerName: data.playerName,
+        playerName: playerName, // Verwende die gleiche Variable wie oben
+        locked: false
       };
 
       socket.join(data.roomCode);
@@ -206,13 +278,20 @@ io.on("connection", (socket) => {
     try {
       const { roomCode, text } = data;
       const room = rooms[roomCode];
-
+  
       if (room && room.players[socket.id]) {
-        // Prüft ob der Sender ein Spieler ist
-        room.notes[socket.id].text = text;
+        // Hier wichtig: Behalte den existierenden playerName bei!
+        const playerName = room.notes[socket.id].playerName;
+        room.notes[socket.id] = {
+          text: text,
+          playerName: playerName
+        };
+        
+        // Debug logs
+        console.log("Updated notes for room:", room.notes);
+        
         // An den Host senden
         io.to(room.host).emit("notes-update", room.notes);
-        console.log(`Note updated from player ${socket.id}`); // Debug-Log
       }
     } catch (error) {
       console.error("Note update error:", error);
@@ -350,6 +429,22 @@ io.on("connection", (socket) => {
       console.error("Timer reset error:", error);
     }
   });
+
+  socket.on('generate-number', (data) => {
+    try {
+        const room = rooms[data.roomCode];
+        if (room && room.host === socket.id) {
+            const min = Math.ceil(data.min);
+            const max = Math.floor(data.max);
+            const randomNumber = Math.floor(Math.random() * (max - min + 1)) + min;
+            
+            io.to(data.roomCode).emit('number-generated', { number: randomNumber });
+        }
+    } catch (error) {
+        console.error('Random number generation error:', error);
+    }
+  });
+
 });
 
 // Server starten

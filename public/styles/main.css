@@ -3,7 +3,6 @@
   margin: 0;
 }
 
-
 body {
   min-height: 90vh;
   background-image: radial-gradient(
@@ -41,6 +40,10 @@ p {
   font-weight: 300;
   padding: 0;
   margin: 0;
+  margin-block-start: 0;
+  margin-block-end: 0;
+  margin-inline-start: 0px;
+  margin-inline-end: 0px;
 }
 
 h1 {
@@ -73,6 +76,16 @@ h4 {
   font-weight: 200;
 }
 
+
+
+
+.donate {
+  position: absolute;
+  left: 50px;
+  top: 50px;
+  width: 100px;
+}
+
 .log-grid {
   display: grid;
   grid-template-columns: 1fr 30% 1fr;
@@ -102,7 +115,6 @@ h4 {
   text-align: center;
   justify-self: center;
 }
-
 
 .log-button:hover {
   background-color: #f2388f;
@@ -164,7 +176,6 @@ h4 {
   grid-column-end: 2;
   grid-row-start: 3;
   grid-row-end: 4;
-
 }
 
 #room-code {
@@ -229,7 +240,6 @@ h4 {
   border-width: 0 3px 3px 0;
   display: inline-block;
   padding: 3px;
-  
 }
 
 .right {
@@ -241,7 +251,6 @@ h4 {
   transform: rotate(135deg);
   -webkit-transform: rotate(135deg);
 }
-
 
 .gamemaster-avatar {
   grid-column-start: 3;
@@ -267,7 +276,7 @@ h4 {
   grid-column-end: 3;
   grid-row-start: 2;
   grid-row-end: 3;
-  font-family: 'Monigue';
+  font-family: "Monigue";
   font-size: 50px;
   text-align: center;
   align-self: center;
@@ -281,8 +290,6 @@ h4 {
   text-align: center;
   align-self: center;
 }
-
-
 
 /* Container und Layout */
 .container {
@@ -372,22 +379,104 @@ h4 {
   border: 0;
 }
 
+/* random generator*/
+
+.generator-controls {
+  grid-column-start: 1;
+  grid-column-end: 2;
+  text-align: center;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: auto 85px auto auto;
+}
+
+.generator-input {
+  background-color: #2a2a42;
+  border: 1px solid #5454857c;
+  border-radius: 10px;
+  color: white;
+  padding: 10px;
+  margin: 0 5px;
+  width: 100px;
+  font-family: 'Bricolage Grotesque';
+  justify-self: center;
+}
+
+.gi1 {
+  grid-column-start: 1;
+  grid-column-end: 2;
+  grid-row-start: 3;
+  grid-row-end: 4;
+  justify-self: end;
+}
+
+.gi2 {
+  grid-column-start: 2;
+  grid-column-end: 3;
+  grid-row-start: 3;
+  grid-row-end: 4;
+  justify-self: start;
+}
+
+.random-number-section {
+  text-align: center;
+  margin: auto;
+  grid-column-start: 1;
+  grid-column-end: 3;
+  grid-row-start: 2;
+  grid-row-end: 3;
+}
+
+.random-number-section-player {
+  text-align: center;
+  grid-column-start: 1;
+  grid-column-end: 2;
+  grid-row-start: 1;
+  grid-row-end: 2;
+
+  display: grid;
+  grid-template-columns: 1fr;
+  grid-template-rows: auto auto;
+}
+
+.random-number-section-player .number {
+  height: max-content;
+}
+
+.random-number {
+  font-family: 'Monigue';
+  font-size: 48px;
+  color: white;
+  text-align: center;
+}
+
+#roll-button {
+  margin: 0;
+  grid-column-start: 1;
+  grid-column-end: 3;
+  grid-row-start: 4;
+  grid-row-end: 5;
+}
+
+.generator-controls h3 {
+  grid-column-start: 1;
+  grid-column-end: 3;
+}
+
 #gamemaster-section {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr 1fr 1fr;
   grid-template-rows: 200px auto;
   grid-gap: 20px;
   text-align: center;
 }
 
 .controls-panel {
-  grid-column-start: 1;
-  grid-column-end: 2;
+  grid-column-start: 2;
+  grid-column-end: 3;
   grid-row-start: 1;
-}
 
-.buzzer-status {
-  margin-top: 20px;
+  display: grid;
+  grid-template-rows: auto 85px auto;
 }
 
 .gamemaster-note-section {
@@ -437,7 +526,7 @@ h4 {
   text-align: center;
   padding: 20px;
   color: #64647e;
-  font-family: 'Bricolage Grotesque';
+  font-family: "Bricolage Grotesque";
   font-weight: 300;
 }
 
@@ -555,17 +644,12 @@ h4 {
 }
 
 /* Controls */
-.point-controls {
-  flex-grow: 1;
-  text-align: end;
-}
-
-
 .point-controls button {
   font-family: "Bricolage Grotesque";
   font-weight: 300;
-  margin: 0 2px;
-  padding: 5px;
+  margin: 5px 0;
+  padding: 3px 5px;
+  width: 40px;
   color: white;
   display: flex;
   gap: 5px;
@@ -606,6 +690,8 @@ h4 {
   border-style: solid;
   border-color: #5454857c;
   color: white;
+  text-wrap: wrap;
+  overflow-wrap: anywhere;
 }
 
 .note-field::placeholder {
@@ -621,9 +707,12 @@ h4 {
   opacity: 1;
 }
 
+.note-field.locked {
+  border: 2px solid #f2388f;
+}
+
 .player-note-container {
   text-align: start;
-  padding: 15px;
   margin: 0;
   border-radius: 4px;
   border-width: 1px;
@@ -633,11 +722,14 @@ h4 {
 .player-note-header {
   color: white;
   font-family: "Bricolage Grotesque";
-  margin-bottom: 5px;
+}
+
+.gm-controls {
+  align-self: end;
 }
 
 .gm-button {
-  height: 50px;
+  height: 40px;
   width: auto;
   background-color: #2a2a42;
   border-radius: 42px;
@@ -649,8 +741,8 @@ h4 {
   font-size: 14px;
   text-decoration: none;
   transition: all 0.2s;
-  margin-top: 10px;
-  padding: 10px 30px;
+  padding: 10px 20px;
+  margin: 0 5px;
 }
 
 .gm-button:hover {
@@ -664,7 +756,7 @@ h4 {
 }
 
 #player-section.game-section {
-  grid-template-columns: 30% auto auto 30%;
+  grid-template-columns: 1fr 1fr 1fr 1fr;
   grid-template-rows: auto auto;
   grid-gap: 20px;
   text-align: center;
@@ -693,7 +785,7 @@ h4 {
   color: white;
   padding: 10px;
   border-radius: 100px;
-  grid-column-start: 1;
+  grid-column-start: 2;
   grid-column-end: 4;
   border-width: 0;
   height: 200px;
@@ -738,13 +830,18 @@ h4 {
 
 /* Master */
 .timer-section {
-  display: flex;
+  grid-column-start: 3;
+  grid-column-end: 4;
+  display: grid;
   text-align: center;
-  grid-column-start: 2;
-  grid-column-end: 3;
-  align-items: center;
-  justify-content: space-between;
-  flex-direction: column;
+  text-align: center;
+  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-rows: auto 85px auto ;
+}
+
+.timer-section h3{
+  grid-column-start: 1;
+  grid-column-end: 4;
 }
 
 /* Player */
@@ -752,6 +849,10 @@ h4 {
   text-align: center;
   grid-column-start: 4;
   grid-column-end: 5;
+
+  display: grid;
+  grid-template-columns: 1fr;
+  grid-template-rows: auto auto;
 }
 
 #timer-display-master {
@@ -759,6 +860,8 @@ h4 {
   font-size: 48px;
   color: white;
   margin: 20px 0;
+  grid-column-start: 1;
+  grid-column-end: 4;
 }
 
 #timer-display-player {
@@ -766,10 +869,18 @@ h4 {
   font-size: 64px;
   color: white;
   margin: 20px 0;
+  height: max-content ;
 }
 
 #timer-controls {
-  margin: 10px 0;
+  grid-column-start: 1;
+  grid-column-end: 4;
+  grid-row-start: 3;
+  grid-row-end: 4;
+}
+
+#timer-controls h3 {
+  margin: 20px 0;
 }
 
 .timer-btn {
@@ -789,19 +900,22 @@ h4 {
   box-shadow: 0px 0px 10px 0px #5454859a;
 }
 
-.timer-reset {
+.timer-reset, #roll-button, .player-button{
   background-color: #f2388f;
   color: white;
   border: none;
-  border-radius: 10px;
+  border-radius: 30px;
   padding: 10px 20px;
-  margin: 0 5px;
+  margin-top: 10px;
+  width: 200px;
   cursor: pointer;
   font-family: "Bricolage Grotesque";
   transition: all 0.2s;
+  justify-self: center;
+  height: 40px;
 }
 
-.timer-reset:hover {
+.timer-reset:hover, #roll-button:hover, .player-button:hover{
   box-shadow: 0px 0px 20px 0px #f2388f;
 }
 
@@ -828,38 +942,6 @@ footer a {
 footer a:hover {
   text-decoration: underline;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 @font-face {
   font-family: "Monigue";

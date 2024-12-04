@@ -7,6 +7,14 @@
     <script src="/js/main.js" defer></script>
   </head>
   <body>
+
+    <div class="donate">
+      <a href="https://www.patreon.com/c/nikra">
+        <img src="./assets/img/donate_love.png" alt="Donation Heart">
+      </a>
+      
+    </div>
+
     <div class="container">
       <!-- Startbereich -->
       <div id="start-section">
@@ -15,11 +23,7 @@
           Game Night
         </h1>
 
-        
-
         <div class="log-grid">
-
-
           <!-- JOIN -->
           <h3 class="join-heading">Join a room</h3>
 
@@ -27,69 +31,78 @@
           <div class="avatar-selector">
             <h4>Choose Avatar</h4>
             <div class="avatar-carousel">
-                <button class="carousel-btn prev">
-                  <i class="arrow left"></i>
-                </button>
-                
-                <div class="avatar-display">
-                    <img id="selected-avatar" src="/assets/img/avatar_1.png" data-avatar-id="1">
-                </div>
-                <button class="carousel-btn next">
-                  <i class="arrow right"></i>
-                </button>
+              <button class="carousel-btn prev">
+                <i class="arrow left"></i>
+              </button>
+
+              <div class="avatar-display">
+                <img
+                  id="selected-avatar"
+                  src="/assets/img/avatar_1.png"
+                  data-avatar-id="1"
+                />
+              </div>
+              <button class="carousel-btn next">
+                <i class="arrow right"></i>
+              </button>
             </div>
           </div>
 
           <input
             class="log-field"
             type="text"
+            maxlength="20"
             id="player-name"
-            placeholder="Your Name" />
+            placeholder="Your Name"
+          />
 
           <input
-          class="log-field"
-          type="text"
-          id="room-code"
-          placeholder="Room Code" />
+            class="log-field"
+            type="text"
+            id="room-code"
+            placeholder="Room Code"
+          />
 
           <button class="log-button1" id="join-room">Join room</button>
 
-
           <h2 class="or-heading">OR</h2>
-
 
           <!-- CREATE -->
 
           <h3 class="create-heading">Create a room</h3>
 
-          <img class="gamemaster-avatar" src="./assets/img/gamemaster_avatar.png" alt="Gamemaster-Avatar">
+          <img
+            class="gamemaster-avatar"
+            src="./assets/img/gamemaster_avatar.png"
+            alt="Gamemaster-Avatar"
+          />
 
           <button class="log-button" id="create-room">Create room</button>
-
-          
-          
         </div>
       </div>
 
       <!-- Spielbereich -->
       <div id="game-section" class="game-section">
-
         <div class="sound-control">
-          <button 
-              id="toggle-sound" 
-              class="sound-toggle" 
-              aria-label="Toggle sounds" 
-              role="switch" 
-              aria-checked="true">
-              <span class="sound-icon">🔊</span>
-              <span class="visually-hidden">Sound is on</span>
+          <button
+            id="toggle-sound"
+            class="sound-toggle"
+            aria-label="Toggle sounds"
+            role="switch"
+            aria-checked="true"
+          >
+            <span class="sound-icon">🔊</span>
+            <span class="visually-hidden">Sound is on</span>
           </button>
-      </div>
+        </div>
 
-
-
-        <h2>Room: <span id="current-room" class="room-code" title="Click to copy"></span>
-
+        <h2>
+          Room:
+          <span
+            id="current-room"
+            class="room-code"
+            title="Click to copy"
+          ></span>
         </h2>
 
         <!-- Leaderboard (für alle sichtbar) -->
@@ -99,21 +112,34 @@
 
         <!-- Im gamemaster-section div -->
         <div id="gamemaster-section" class="game-section inner-container">
-          <div class="controls-panel">
-            <div class="gm-controls">
-              <h3>Buzzer Controls</h3>
-              <button class="gm-button" id="release-buzzers">
-                Release
-              </button>
-              <button class="gm-button" id="lock-buzzers">
-                Lock
-              </button>
+          
+          <div id="random-generator-controls" class="generator-controls">
+            <h3>Random Roll</h3>
+
+            <div class="random-number-section">
+              <div id="random-number-display-gm" class="random-number">
+                  <!-- Wird durch JS gefüllt -->
+              </div>
             </div>
+
+            <input type="number" id="min-number" class="generator-input gi1" placeholder="Min" min="0">
+
+            <input type="number" id="max-number" class="generator-input gi2" placeholder="Max" min="0">
+
+            <button id="roll-button" class="gm-button">Roll</button>
+          </div>
+          
+          <div class="controls-panel">
+            <h3>Buzzer</h3>
 
             <!-- Neue Buzzer-Status Anzeige -->
             <div id="buzzer-status" class="buzzer-status">
-              <h3>Buzzer Status</h3>
               <div id="current-buzzer"></div>
+            </div>
+            
+            <div class="gm-controls">
+              <button class="gm-button" id="release-buzzers">Release</button>
+              <button class="gm-button" id="lock-buzzers">Lock</button>
             </div>
           </div>
 
@@ -129,9 +155,14 @@
             <textarea
               id="gamemaster-note"
               class="note-field"
+              maxlength="500"
               placeholder="Write a message to your players..."
               oninput="updateGamemasterNote(this.value)"
             ></textarea>
+            <div class="gm-controls">
+              <button class="gm-button" id="lock-all-answers">Lock Answers</button>
+              <button class="gm-button" id="unlock-all-answers">Unlock Answers</button>
+            </div>
           </div>
 
           <!-- Wichtig: Diese Struktur muss genau so sein -->
@@ -145,6 +176,14 @@
 
         <!-- Spieler Bereich -->
         <div id="player-section" class="game-section inner-container">
+          
+          <div class="random-number-section-player">
+            <h3>Random Roll</h3>
+            <div id="random-number-display" class="random-number">
+                <!-- Wird durch JS gefüllt -->
+            </div>
+          </div>
+          
           <button id="buzzer" class="buzzer">BUZZ</button>
 
           <div id="timer-area" class="timer-area">
@@ -164,8 +203,10 @@
             <textarea
               id="player-note"
               class="note-field"
+              maxlength="500"
               placeholder="Your notes..."
             ></textarea>
+            <button class="player-button" id="lock-answer">Lock in Answer</button>
           </div>
         </div>
 
@@ -187,9 +228,6 @@
 
     <footer>
       <a href="./impressum.html">Impressum © 2024 Nic Kraneis</a>
-
     </footer>
-
-
   </body>
 </html>
