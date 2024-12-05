@@ -9,8 +9,8 @@ const path = require("path");
 
 // Rate Limiter konfigurieren
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 Minuten
-  max: 300, // Limit pro IP
+  windowMs: 1 * 60 * 1000, // 15 Minuten
+  max: 1000, // Limit pro IP
 });
 
 const app = express();
