@@ -6,56 +6,25 @@ let timerInterval = null;
 let currentAvatarId = 1;
 let soundEnabled = true;
 
-let reconnectAttempts = 0;
-let wasConnected = false;
-let lastRoomState = {
-  roomCode: null,
-  playerName: "",
-  isGamemaster: false,
-  avatarId: 1
-};
+socket.on('auto-rejoin', (cachedState) => {
+  console.log('Automatically rejoined game:', cachedState);
+  
+  // Setze globale Variablen
+  currentRoomCode = cachedState.roomCode;
+  playerName = cachedState.playerName;
+  isGamemaster = cachedState.isGamemaster;
+  currentAvatarId = cachedState.avatarId;
+  
+  // UI wiederherstellen
+  showGameInterface(cachedState.roomCode, cachedState.isGamemaster);
+});
 
-function saveRoomState() {
-  lastRoomState = {
-    roomCode: currentRoomCode,
-    playerName: playerName,
-    isGamemaster: isGamemaster,
-    avatarId: currentAvatarId
-  };
-  // Speichere im localStorage für Browsertab-Schließungen
-  localStorage.setItem('gameRoomState', JSON.stringify(lastRoomState));
-}
-
-function restoreRoomState() {
-  const storedState = localStorage.getItem('gameRoomState');
-  if (storedState) {
-    lastRoomState = JSON.parse(storedState);
-  }
-  return lastRoomState;
-}
 
 function showGameInterface(roomCode, asGamemaster) {
   currentRoomCode = roomCode;
   document.getElementById("current-room").textContent = roomCode;
   const roomCodeElement = document.getElementById("current-room");
   roomCodeElement.textContent = roomCode;
-
-  saveRoomState();
-
-  // Click-Handler für Copy-Funktion
-  roomCodeElement.addEventListener("click", async () => {
-    try {
-      await navigator.clipboard.writeText(roomCode);
-
-      // Optional: Visuelle Bestätigung
-      roomCodeElement.textContent = "Copied!";
-      setTimeout(() => {
-        roomCodeElement.textContent = roomCode;
-      }, 1000);
-    } catch (err) {
-      console.error("Failed to copy:", err);
-    }
-  });
 
   document.getElementById("start-section").style.display = "none";
   document.getElementById("game-section").style.display = "grid";
@@ -143,7 +112,10 @@ document.addEventListener("DOMContentLoaded", () => {
   // Raum erstellen
   document.getElementById("create-room").addEventListener("click", () => {
     playerName = document.getElementById("player-name").value || "Showmaster";
-    socket.emit("create-room", { playerName });
+    socket.emit("create-room", { 
+      playerName: playerName,
+      avatarId: currentAvatarId 
+    });
     isGamemaster = true;
   });
 
@@ -269,15 +241,6 @@ document.addEventListener("DOMContentLoaded", () => {
     let newId = currentAvatarId + 1;
     if (newId > 20) newId = 1;
     updateAvatar(newId);
-  });
-
-  // Avatar-ID beim Raum erstellen/beitreten mitsenden
-  document.getElementById("create-room").addEventListener("click", () => {
-    socket.emit("create-room", {
-      playerName: playerName,
-      avatarId: currentAvatarId,
-    });
-    isGamemaster = true;
   });
 
   document.getElementById("join-room").addEventListener("click", () => {
@@ -675,93 +638,3 @@ socket.on("room-error", (error) => {
   alert(error);
 });
 
-socket.on('connect', () => {
-  console.log('Connected to server');
-  
-  // Entferne disconnect Banner falls vorhanden
-  const banner = document.getElementById('disconnect-banner');
-  if (banner) banner.remove();
-
-  if (wasConnected) {
-    // War vorher verbunden - Versuche Wiederherstellung
-    const state = restoreRoomState();
-    if (state.roomCode) {
-      console.log('Attempting to restore session...');
-      if (state.isGamemaster) {
-        socket.emit('create-room', {
-          playerName: state.playerName,
-          avatarId: state.avatarId
-        });
-      } else {
-        socket.emit('join-room', {
-          roomCode: state.roomCode,
-          playerName: state.playerName,
-          avatarId: state.avatarId
-        });
-      }
-    }
-  }
-  wasConnected = true;
-  reconnectAttempts = 0;
-});
-
-socket.on('disconnect', () => {
-  console.log('Disconnected from server');
-  // Optional: Visuelles Feedback für den Nutzer
-  const gameSection = document.getElementById('game-section');
-  if (gameSection) {
-    const disconnectBanner = document.createElement('div');
-    disconnectBanner.id = 'disconnect-banner';
-    disconnectBanner.style.cssText = `
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      background-color: #f2388f;
-      color: white;
-      text-align: center;
-      padding: 10px;
-      z-index: 1000;
-    `;
-    disconnectBanner.textContent = 'Connection lost. Reconnecting...';
-    gameSection.appendChild(disconnectBanner);
-  }
-});
-
-socket.on('disconnect', (reason) => {
-  console.log('Disconnected from server:', reason);
-  saveRoomState();
-  
-  // Zeige Disconnect Banner
-  showDisconnectBanner();
-});
-
-socket.on('reconnect_attempt', (attemptNumber) => {
-  console.log('Reconnection attempt:', attemptNumber);
-  reconnectAttempts = attemptNumber;
-  updateDisconnectBanner();
-});
-
-socket.on('reconnect_failed', () => {
-  console.log('Failed to reconnect after all attempts');
-  showFailedReconnectBanner();
-});
-
-socket.on('disconnect', (reason) => {
-  console.log('Disconnected from server:', reason);
-  saveRoomState();
-  
-  // Zeige Disconnect Banner
-  showDisconnectBanner();
-});
-
-socket.on('reconnect_attempt', (attemptNumber) => {
-  console.log('Reconnection attempt:', attemptNumber);
-  reconnectAttempts = attemptNumber;
-  updateDisconnectBanner();
-});
-
-socket.on('reconnect_failed', () => {
-  console.log('Failed to reconnect after all attempts');
-  showFailedReconnectBanner();
-});

@@ -6,6 +6,8 @@ const helmet = require("helmet");
 require("dotenv").config();
 const fs = require("fs");
 const path = require("path");
+const playerCache = {}; // Speichert Spielerzustände nach IP
+const roomPlayerIPs = {}; // Speichert IPs pro Raum für einfacheres Cleanup
 
 // Rate Limiter konfigurieren
 const limiter = rateLimit({
@@ -42,13 +44,6 @@ const io = new Server(server, {
     origin: process.env.CORS_ORIGIN || "*",
     methods: ["GET", "POST"],
   },
-  // Verbesserte Verbindungseinstellungen
-  pingTimeout: 60000,
-  pingInterval: 25000,
-  connectTimeout: 45000,
-  // Wichtig: Weitere Optionen für bessere Stabilität
-  transports: ['websocket', 'polling'],
-  allowEIO3: true
 });
 
 process.on("uncaughtException", (error) => {
@@ -101,9 +96,14 @@ function cleanupRooms() {
   }
 }
 
+// Regelmäßige Bereinigung
+setInterval(cleanupRooms, 30 * 60 * 1000); // Alle 30 Minuten
+
 function deleteRoom(roomCode) {
   console.log(`Deleting room ${roomCode}`);
   io.to(roomCode).emit("room-closed");
+  // Cache für den Raum löschen
+  clearRoomCache(roomCode);
   delete rooms[roomCode];
 }
 
@@ -120,19 +120,85 @@ function startRoomTimer(roomCode) {
   }, INACTIVE_TIMEOUT);
 }
 
-// Regelmäßige Bereinigung
-setInterval(cleanupRooms, 30 * 60 * 1000); // Alle 30 Minuten
+
+// Helper Funktion zum Abrufen der IP
+function getClientIP(socket) {
+  return socket.handshake.headers['x-forwarded-for'] || socket.handshake.address;
+}
+
+// Cache Management Funktionen
+function clearPlayerCache(clientIP) {
+  delete playerCache[clientIP];
+}
+
+function clearRoomCache(roomCode) {
+  // Lösche Cache aller Spieler in diesem Raum
+  if (roomPlayerIPs[roomCode]) {
+    roomPlayerIPs[roomCode].forEach(ip => {
+      clearPlayerCache(ip);
+    });
+    delete roomPlayerIPs[roomCode];
+  }
+}
+
+function addPlayerToRoomCache(roomCode, clientIP) {
+  if (!roomPlayerIPs[roomCode]) {
+    roomPlayerIPs[roomCode] = new Set();
+  }
+  roomPlayerIPs[roomCode].add(clientIP);
+}
 
 // Socket.IO Event Handler
 io.on("connection", (socket) => {
   console.log("Neuer Client verbunden");
   let currentRoom = null;
 
+  // Prüfe ob ein cached Zustand existiert
+  if (playerCache[clientIP]) {
+    const cachedState = playerCache[clientIP];
+    const room = rooms[cachedState.roomCode];
+    
+    if (room) {
+      // Automatisch wieder verbinden
+      socket.join(cachedState.roomCode);
+      currentRoom = cachedState.roomCode;
+      
+      if (cachedState.isGamemaster) {
+        room.host = socket.id;
+      } else {
+        room.players[socket.id] = {
+          id: socket.id,
+          name: cachedState.playerName,
+          points: cachedState.points || 0,
+          isHost: false,
+          avatarId: cachedState.avatarId
+        };
+        
+        room.notes[socket.id] = {
+          text: cachedState.noteText || "",
+          playerName: cachedState.playerName,
+          locked: false
+        };
+      }
+      
+      // Informiere Client über erfolgreiche Wiederverbindung
+      socket.emit('auto-rejoin', cachedState);
+      
+      // Update alle über neue Spielerliste
+      io.to(cachedState.roomCode).emit('player-list-update', room.players);
+      // Sende Notizen an Host
+      io.to(room.host).emit('notes-update', room.notes);
+    }
+  }
+
   socket.on("create-room", (data) => {
     try {
       if (!data?.playerName?.trim()) {
         throw new Error("Invalid player name");
       }
+
+      // Alten Cache löschen falls vorhanden
+      clearPlayerCache(clientIP);
 
       const roomCode = generateRoomCode();
       rooms[roomCode] = {
@@ -152,6 +218,18 @@ io.on("connection", (socket) => {
 
       currentRoom = roomCode;
       socket.join(roomCode);
+
+      // Neuen Cache erstellen
+      playerCache[clientIP] = {
+        roomCode: roomCode,
+        playerName: data.playerName,
+        avatarId: data.avatarId,
+        isGamemaster: true
+      };
+      
+      // IP zum Raum-Cache hinzufügen
+      addPlayerToRoomCache(roomCode, clientIP);
+
       socket.emit("room-created", { roomCode });
       startRoomTimer(roomCode);
       console.log(`Room ${roomCode} created by ${data.playerName}`);
@@ -159,8 +237,58 @@ io.on("connection", (socket) => {
       socket.emit("room-error", error.message);
       console.error("Room creation error:", error);
     }
+  });
 
-    
+  socket.on("join-room", (data) => {
+    try {
+      if (!data?.roomCode) {
+        throw new Error("Invalid room code");
+      }
+
+      const room = rooms[data.roomCode];
+      if (!room) {
+        throw new Error("Room does not exist");
+      }
+
+      const playerCount = Object.keys(room.players).length;
+      if (playerCount >= 12) {
+        throw new Error("Room is full (max 12 players)");
+      }
+
+      // Zufälliger Name wenn leer oder nur Leerzeichen
+      const playerName = data.playerName?.trim()
+        ? data.playerName.trim()
+        : getRandomName();
+
+      currentRoom = data.roomCode;
+      room.players[socket.id] = {
+        id: socket.id,
+        name: playerName, // Hier wird der zufällige Name verwendet
+        points: 0,
+        isHost: false,
+        avatarId: data.avatarId,
+      };
+
+      // Notiz initialisieren
+      room.notes[socket.id] = {
+        text: "",
+        playerName: playerName, // Verwende die gleiche Variable wie oben
+        locked: false
+      };
+
+      socket.join(data.roomCode);
+      // Update alle über neue Spielerliste
+      io.to(data.roomCode).emit("player-list-update", room.players);
+      // Sende aktuelle Gamemaster-Notiz an neuen Spieler
+      socket.emit("gamemaster-note-update", { text: room.gamemasterNote });
+      // Sende Spieler-Notizen an Host
+      io.to(room.host).emit("notes-update", room.notes);
+
+      console.log(`Player ${data.playerName} joined room ${data.roomCode}`);
+    } catch (error) {
+      socket.emit("room-error", error.message);
+      console.error("Join room error:", error);
+    }
   });
 
   socket.on("lock-player-answer", (data) => {
@@ -226,58 +354,6 @@ io.on("connection", (socket) => {
       }
     } catch (error) {
       console.error("Unlock all answers error:", error);
-    }
-  });
-
-  socket.on("join-room", (data) => {
-    try {
-      if (!data?.roomCode) {
-        throw new Error("Invalid room code");
-      }
-
-      const room = rooms[data.roomCode];
-      if (!room) {
-        throw new Error("Room does not exist");
-      }
-
-      const playerCount = Object.keys(room.players).length;
-      if (playerCount >= 12) {
-        throw new Error("Room is full (max 12 players)");
-      }
-
-      // Zufälliger Name wenn leer oder nur Leerzeichen
-      const playerName = data.playerName?.trim()
-        ? data.playerName.trim()
-        : getRandomName();
-
-      currentRoom = data.roomCode;
-      room.players[socket.id] = {
-        id: socket.id,
-        name: playerName, // Hier wird der zufällige Name verwendet
-        points: 0,
-        isHost: false,
-        avatarId: data.avatarId,
-      };
-
-      // Notiz initialisieren
-      room.notes[socket.id] = {
-        text: "",
-        playerName: playerName, // Verwende die gleiche Variable wie oben
-        locked: false
-      };
-
-      socket.join(data.roomCode);
-      // Update alle über neue Spielerliste
-      io.to(data.roomCode).emit("player-list-update", room.players);
-      // Sende aktuelle Gamemaster-Notiz an neuen Spieler
-      socket.emit("gamemaster-note-update", { text: room.gamemasterNote });
-      // Sende Spieler-Notizen an Host
-      io.to(room.host).emit("notes-update", room.notes);
-
-      console.log(`Player ${data.playerName} joined room ${data.roomCode}`);
-    } catch (error) {
-      socket.emit("room-error", error.message);
-      console.error("Join room error:", error);
     }
   });
 
