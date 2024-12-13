@@ -131,6 +131,7 @@ document.addEventListener("DOMContentLoaded", () => {
       avatarId: currentAvatarId,
     });
     isGamemaster = false;
+    showGameInterface(currentRoomCode, false);
   });
 
   // Buzzer
@@ -318,12 +319,7 @@ socket.on("room-created", (data) => {
 
 // In main.js - Leaderboard Erstellung ändern
 socket.on("player-list-update", (players) => {
-  if (!currentRoomCode) {
-    showGameInterface(
-      document.getElementById("room-code").value.toUpperCase(),
-      false
-    );
-  }
+  
 
   const leaderboard = document.getElementById("leaderboard");
   leaderboard.innerHTML = "<h3>Leaderboard</h3>";
