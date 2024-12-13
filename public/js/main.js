@@ -5,6 +5,18 @@ let playerName = "";
 let timerInterval = null;
 let currentAvatarId = 1;
 let soundEnabled = true;
+let deviceId;
+
+function getOrCreateDeviceId() {
+  let id = localStorage.getItem('deviceId');
+  if (!id) {
+      id = crypto.randomUUID();
+      localStorage.setItem('deviceId', id);
+  }
+  return id;
+}
+
+deviceId = getOrCreateDeviceId();
 
 function showGameInterface(roomCode, asGamemaster) {
   currentRoomCode = roomCode;
@@ -112,7 +124,8 @@ document.addEventListener("DOMContentLoaded", () => {
     playerName = document.getElementById("player-name").value || "Showmaster";
     socket.emit("create-room", { 
       playerName: playerName,
-      avatarId: currentAvatarId 
+      avatarId: currentAvatarId,
+      deviceId: deviceId,
     });
     isGamemaster = true;
   });
@@ -129,6 +142,7 @@ document.addEventListener("DOMContentLoaded", () => {
       roomCode: currentRoomCode, // Nutze direkt den bereinigten Code
       playerName: inputName,
       avatarId: currentAvatarId,
+      deviceId: deviceId, 
     });
     isGamemaster = false;
   });
