@@ -117,9 +117,10 @@ function startRoomTimer(roomCode) {
   }, INACTIVE_TIMEOUT);
 }
 
-// Helper Funktion
 function getClientIP(socket) {
-  return socket.handshake.headers['x-forwarded-for'] || socket.handshake.address;
+  const fullIP = socket.handshake.headers['x-forwarded-for'] || socket.handshake.address;
+  // Nimm nur die erste IP aus der Liste
+  return fullIP.split(',')[0].trim();
 }
 
 // Socket.IO Event Handler
