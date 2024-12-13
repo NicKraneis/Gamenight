@@ -136,6 +136,8 @@ io.on("connection", (socket) => {
       }
 
       const roomCode = generateRoomCode();
+      console.log('Creating room with code:', roomCode); // Debug-Log
+
       rooms[roomCode] = {
         host: socket.id,
         players: {},
@@ -150,6 +152,7 @@ io.on("connection", (socket) => {
         },
         lockedAnswers: new Set(),
       };
+      console.log('Room created. Current rooms:', Object.keys(rooms)); // Debug-Log
 
       currentRoom = roomCode;
       socket.join(roomCode);
@@ -185,13 +188,11 @@ io.on("connection", (socket) => {
         ? data.playerName.trim()
         : getRandomName();
 
-      currentRoom = data.roomCode;
-
       const clientIP = getClientIP(socket);
       console.log('Join attempt:', {
         ip: clientIP,
         cachedPoints: playerPoints[clientIP],
-        roomCode: data.roomCode
+        roomCode: roomCode // Hier den bereinigten Code nutzen
       });
 
       room.players[socket.id] = {
@@ -200,8 +201,11 @@ io.on("connection", (socket) => {
         points: playerPoints[data.deviceId] || 0,
         isHost: false,
         avatarId: data.avatarId,
-        deviceId: data.deviceId, // Speichere deviceId am Spieler
+        deviceId: data.deviceId
       };
+
+      // HIER den currentRoom setzen, nachdem alles validiert wurde
+      currentRoom = roomCode; // Auch hier den bereinigten Code nutzen
 
       console.log('Player joined with points:', {
         ip: clientIP,
@@ -211,22 +215,18 @@ io.on("connection", (socket) => {
 
       socket.emit("join-success", { roomCode: roomCode });
 
-      // Notiz initialisieren
       room.notes[socket.id] = {
         text: "",
-        playerName: playerName, // Verwende die gleiche Variable wie oben
+        playerName: playerName,
         locked: false
       };
 
-      socket.join(data.roomCode);
-      // Update alle über neue Spielerliste
-      io.to(data.roomCode).emit("player-list-update", room.players);
-      // Sende aktuelle Gamemaster-Notiz an neuen Spieler
+      socket.join(roomCode); // Hier auch den bereinigten Code nutzen
+      io.to(roomCode).emit("player-list-update", room.players);
       socket.emit("gamemaster-note-update", { text: room.gamemasterNote });
-      // Sende Spieler-Notizen an Host
       io.to(room.host).emit("notes-update", room.notes);
 
-      console.log(`Player ${data.playerName} joined room ${data.roomCode}`);
+      console.log(`Player ${playerName} joined room ${roomCode}`);
     } catch (error) {
       socket.emit("room-error", error.message);
       console.error("Join room error:", error);
