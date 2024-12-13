@@ -6,7 +6,9 @@ const helmet = require("helmet");
 require("dotenv").config();
 const fs = require("fs");
 const path = require("path");
-const playerPoints = {}; // Speichert Punkte nach IP
+const playerPoints = {
+  // Format: { 'roomCode': { 'deviceId': points } }
+};
 
 // Rate Limiter konfigurieren
 const limiter = rateLimit({
@@ -101,6 +103,12 @@ setInterval(cleanupRooms, 30 * 60 * 1000); // Alle 30 Minuten
 function deleteRoom(roomCode) {
   console.log(`Deleting room ${roomCode}`);
   io.to(roomCode).emit("room-closed");
+
+  if (playerPoints[roomCode]) {
+    delete playerPoints[roomCode];
+    console.log(`Points cache cleared for room ${roomCode}`);
+  }
+
   delete rooms[roomCode];
 }
 
@@ -163,6 +171,8 @@ io.on("connection", (socket) => {
   socket.on("join-room", (data) => {
     try {
       const roomCode = data.roomCode.replace(/\s/g, '');
+      console.log('Join attempt for room:', roomCode); // Debug
+    console.log('Available rooms:', Object.keys(rooms)); // Debug
       if (!roomCode) {
         throw new Error("Invalid room code");
       }
@@ -181,14 +191,15 @@ io.on("connection", (socket) => {
         ? data.playerName.trim()
         : getRandomName();
 
-      room.players[socket.id] = {
-        id: socket.id,
-        name: playerName,
-        points: playerPoints[data.deviceId] || 0,
-        isHost: false,
-        avatarId: data.avatarId,
-        deviceId: data.deviceId
-      };
+        room.players[socket.id] = {
+          id: socket.id,
+          name: playerName,
+          // Prüfe ob Punkte für diesen Raum und diese deviceId existieren
+          points: (playerPoints[roomCode]?.[data.deviceId] || 0),
+          isHost: false,
+          avatarId: data.avatarId,
+          deviceId: data.deviceId
+        };
 
       currentRoom = roomCode;
 
@@ -370,11 +381,19 @@ io.on("connection", (socket) => {
       if (room && room.host === socket.id) {
         room.players[playerId].points += points;
         
-        // Punkte für die deviceId cachen
+        // Punkte für Raum und Device cachen
         const deviceId = room.players[playerId].deviceId;
         if (deviceId) {
-          playerPoints[deviceId] = room.players[playerId].points;
-          console.log('Updated points cache for device:', deviceId, 'New points:', playerPoints[deviceId]);
+          // Erstelle Raum-Objekt falls es noch nicht existiert
+          if (!playerPoints[roomCode]) {
+            playerPoints[roomCode] = {};
+          }
+          playerPoints[roomCode][deviceId] = room.players[playerId].points;
+          console.log('Updated points cache:', {
+            room: roomCode,
+            device: deviceId,
+            points: playerPoints[roomCode][deviceId]
+          });
         }
         
         io.to(roomCode).emit("player-list-update", room.players);
