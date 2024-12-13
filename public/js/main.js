@@ -8,7 +8,6 @@ let soundEnabled = true;
 
 function showGameInterface(roomCode, asGamemaster) {
   currentRoomCode = roomCode;
-  document.getElementById("current-room").textContent = roomCode;
   const roomCodeElement = document.getElementById("current-room");
   roomCodeElement.textContent = roomCode;
 
@@ -121,12 +120,13 @@ document.addEventListener("DOMContentLoaded", () => {
   // Raum beitreten
   document.getElementById("join-room").addEventListener("click", () => {
     const inputName = document.getElementById("player-name").value;
-    const roomCode = document.getElementById("room-code").value
-    .toUpperCase()
-    .replace(/\s/g, '');
-    playerName = inputName; // Speichere den Namen global
+    // Speichere den bereinigten Code direkt in der globalen Variable
+    currentRoomCode = document.getElementById("room-code").value
+      .toUpperCase()
+      .replace(/\s/g, '');
+    playerName = inputName;
     socket.emit("join-room", {
-      roomCode,
+      roomCode: currentRoomCode, // Nutze direkt den bereinigten Code
       playerName: inputName,
       avatarId: currentAvatarId,
     });
@@ -135,6 +135,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Buzzer
   document.getElementById("buzzer").addEventListener("click", () => {
+    console.log("Buzzer clicked, sending to room:", currentRoomCode); // Debug log
     socket.emit("press-buzzer", {
       roomCode: currentRoomCode,
       playerName: playerName,
@@ -153,16 +154,13 @@ document.addEventListener("DOMContentLoaded", () => {
   const playerNote = document.getElementById("player-note");
   if (playerNote) {
     playerNote.addEventListener("input", (e) => {
+      console.log("Note changed, sending to room:", currentRoomCode); // Debug log
       if (!isGamemaster) {
         socket.emit("update-note", {
           roomCode: currentRoomCode,
           text: e.target.value,
-          playerName: playerName // Füge playerName hinzu
-        });
-        console.log("Sending player note:", {
-          text: e.target.value,
           playerName: playerName
-        }); // Debug mit playerName
+        });
       }
     });
   }
@@ -279,7 +277,10 @@ document.addEventListener("DOMContentLoaded", () => {
   const lockAnswerBtn = document.getElementById("lock-answer");
   if (lockAnswerBtn) {
     lockAnswerBtn.addEventListener("click", () => {
-      socket.emit("lock-player-answer", { roomCode: currentRoomCode });
+      console.log("Locking answer for room:", currentRoomCode); // Debug log
+      socket.emit("lock-player-answer", { 
+        roomCode: currentRoomCode 
+      });
     });
   }
 

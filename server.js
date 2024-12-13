@@ -219,6 +219,7 @@ io.on("connection", (socket) => {
   });
 
   socket.on("lock-player-answer", (data) => {
+    console.log("Received lock answer:", data); // Debug log
     try {
       const { roomCode } = data;
       const room = rooms[roomCode];
@@ -285,6 +286,7 @@ io.on("connection", (socket) => {
   });
 
   socket.on("update-note", (data) => {
+    console.log("Received note update:", data); // Debug log
     try {
       const { roomCode, text } = data;
       const room = rooms[roomCode];
@@ -327,6 +329,7 @@ io.on("connection", (socket) => {
   });
 
   socket.on("press-buzzer", (data) => {
+    console.log("Received buzzer press:", data); // Debug log
     try {
       const room = rooms[data.roomCode];
       if (room && room.buzzerActive && room.host !== socket.id) {
