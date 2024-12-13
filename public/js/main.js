@@ -131,8 +131,9 @@ document.addEventListener("DOMContentLoaded", () => {
       avatarId: currentAvatarId,
     });
     isGamemaster = false;
-    showGameInterface(currentRoomCode, false);
   });
+
+  
 
   // Buzzer
   document.getElementById("buzzer").addEventListener("click", () => {
@@ -315,6 +316,10 @@ socket.on("room-created", (data) => {
   noPlayersDiv.textContent =
     "Waiting for players. Share the room code to invite friends!";
   leaderboard.appendChild(noPlayersDiv);
+});
+
+socket.on("join-success", (data) => {
+  showGameInterface(data.roomCode, false);
 });
 
 // In main.js - Leaderboard Erstellung ändern

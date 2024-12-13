@@ -187,6 +187,11 @@ io.on("connection", (socket) => {
       currentRoom = data.roomCode;
 
       const clientIP = getClientIP(socket);
+      console.log('Join attempt:', {
+        ip: clientIP,
+        cachedPoints: playerPoints[clientIP],
+        roomCode: data.roomCode
+      });
 
       room.players[socket.id] = {
         id: socket.id,
@@ -195,6 +200,14 @@ io.on("connection", (socket) => {
         isHost: false,
         avatarId: data.avatarId,
       };
+
+      console.log('Player joined with points:', {
+        ip: clientIP,
+        points: room.players[socket.id].points,
+        cachedPoints: playerPoints[clientIP]
+      });
+
+      socket.emit("join-success", { roomCode: roomCode });
 
       // Notiz initialisieren
       room.notes[socket.id] = {
@@ -374,18 +387,22 @@ io.on("connection", (socket) => {
       const room = rooms[roomCode];
   
       if (room && room.host === socket.id) {
-        // Prüft ob der Sender der Host ist
-        room.players[playerId].points += points;
-        
-        // Punkte für die IP des Spielers cachen
         const playerSocket = io.sockets.sockets.get(playerId);
         if (playerSocket) {
           const clientIP = getClientIP(playerSocket);
+          const oldPoints = playerPoints[clientIP] || 0;
+          room.players[playerId].points += points;
           playerPoints[clientIP] = room.players[playerId].points;
+  
+          console.log('Points updated:', {
+            ip: clientIP,
+            oldPoints: oldPoints,
+            addedPoints: points,
+            newTotal: playerPoints[clientIP]
+          });
         }
         
         io.to(roomCode).emit("player-list-update", room.players);
-        console.log(`Updated points for player ${playerId}: ${points}`);
       }
     } catch (error) {
       console.error("Update points error:", error);
