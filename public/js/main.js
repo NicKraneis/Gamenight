@@ -12,6 +12,19 @@ function showGameInterface(roomCode, asGamemaster) {
   const roomCodeElement = document.getElementById("current-room");
   roomCodeElement.textContent = roomCode;
 
+  roomCodeElement.addEventListener("click", async () => {
+    try {
+      await navigator.clipboard.writeText(roomCode);
+      // Visuelle Bestätigung
+      roomCodeElement.textContent = "Copied!";
+      setTimeout(() => {
+        roomCodeElement.textContent = roomCode;
+      }, 1000);
+    } catch (err) {
+      console.error("Failed to copy:", err);
+    }
+  });
+
   document.getElementById("start-section").style.display = "none";
   document.getElementById("game-section").style.display = "grid";
 
@@ -108,7 +121,9 @@ document.addEventListener("DOMContentLoaded", () => {
   // Raum beitreten
   document.getElementById("join-room").addEventListener("click", () => {
     const inputName = document.getElementById("player-name").value;
-    const roomCode = document.getElementById("room-code").value.toUpperCase();
+    const roomCode = document.getElementById("room-code").value
+    .toUpperCase()
+    .replace(/\s/g, '');
     playerName = inputName; // Speichere den Namen global
     socket.emit("join-room", {
       roomCode,
@@ -227,15 +242,6 @@ document.addEventListener("DOMContentLoaded", () => {
     let newId = currentAvatarId + 1;
     if (newId > 20) newId = 1;
     updateAvatar(newId);
-  });
-
-  document.getElementById("join-room").addEventListener("click", () => {
-    socket.emit("join-room", {
-      roomCode: document.getElementById("room-code").value.toUpperCase(),
-      playerName: playerName,
-      avatarId: currentAvatarId,
-    });
-    isGamemaster = false;
   });
 
   window.addEventListener("beforeunload", (event) => {

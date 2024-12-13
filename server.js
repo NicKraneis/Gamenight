@@ -164,11 +164,12 @@ io.on("connection", (socket) => {
 
   socket.on("join-room", (data) => {
     try {
-      if (!data?.roomCode) {
+      const roomCode = data.roomCode.replace(/\s/g, '');
+      if (!roomCode) {
         throw new Error("Invalid room code");
       }
-
-      const room = rooms[data.roomCode];
+  
+      const room = rooms[roomCode];
       if (!room) {
         throw new Error("Room does not exist");
       }
