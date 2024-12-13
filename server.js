@@ -152,52 +152,27 @@ function addPlayerToRoomCache(roomCode, clientIP) {
 io.on("connection", (socket) => {
   console.log("Neuer Client verbunden");
   let currentRoom = null;
+  // ClientIP hier am Anfang des Connection Handlers definieren
+  const clientIP = getClientIP(socket);
 
-  // Prüfe ob ein cached Zustand existiert
+  // Prüfe auf existierenden Cache gleich bei Verbindung
   if (playerCache[clientIP]) {
     const cachedState = playerCache[clientIP];
     const room = rooms[cachedState.roomCode];
     
     if (room) {
-      // Automatisch wieder verbinden
-      socket.join(cachedState.roomCode);
-      currentRoom = cachedState.roomCode;
-      
-      if (cachedState.isGamemaster) {
-        room.host = socket.id;
-      } else {
-        room.players[socket.id] = {
-          id: socket.id,
-          name: cachedState.playerName,
-          points: cachedState.points || 0,
-          isHost: false,
-          avatarId: cachedState.avatarId
-        };
-        
-        room.notes[socket.id] = {
-          text: cachedState.noteText || "",
-          playerName: cachedState.playerName,
-          locked: false
-        };
-      }
-      
-      // Informiere Client über erfolgreiche Wiederverbindung
-      socket.emit('auto-rejoin', cachedState);
-      
-      // Update alle über neue Spielerliste
-      io.to(cachedState.roomCode).emit('player-list-update', room.players);
-      // Sende Notizen an Host
-      io.to(room.host).emit('notes-update', room.notes);
+      handleCachedConnection(socket, room, cachedState);
     }
   }
 
+  // Event Handler für create-room
   socket.on("create-room", (data) => {
     try {
       if (!data?.playerName?.trim()) {
         throw new Error("Invalid player name");
       }
 
-      // Alten Cache löschen falls vorhanden
+      // Den Cache für diese IP löschen
       clearPlayerCache(clientIP);
 
       const roomCode = generateRoomCode();
@@ -219,7 +194,7 @@ io.on("connection", (socket) => {
       currentRoom = roomCode;
       socket.join(roomCode);
 
-      // Neuen Cache erstellen
+      // Cache für diese IP erstellen
       playerCache[clientIP] = {
         roomCode: roomCode,
         playerName: data.playerName,
@@ -227,7 +202,6 @@ io.on("connection", (socket) => {
         isGamemaster: true
       };
       
-      // IP zum Raum-Cache hinzufügen
       addPlayerToRoomCache(roomCode, clientIP);
 
       socket.emit("room-created", { roomCode });
@@ -529,6 +503,34 @@ io.on("connection", (socket) => {
   });
 
 });
+
+function handleCachedConnection(socket, room, cachedState) {
+  socket.join(cachedState.roomCode);
+  
+  if (cachedState.isGamemaster) {
+    room.host = socket.id;
+  } else {
+    room.players[socket.id] = {
+      id: socket.id,
+      name: cachedState.playerName,
+      points: cachedState.points || 0,
+      isHost: false,
+      avatarId: cachedState.avatarId
+    };
+    
+    room.notes[socket.id] = {
+      text: cachedState.noteText || "",
+      playerName: cachedState.playerName,
+      locked: false
+    };
+  }
+  
+  socket.emit('auto-rejoin', cachedState);
+  io.to(cachedState.roomCode).emit('player-list-update', room.players);
+  if (!cachedState.isGamemaster) {
+    io.to(room.host).emit('notes-update', room.notes);
+  }
+}
 
 // Server starten
 server.listen(PORT, () => {
