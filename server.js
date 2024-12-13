@@ -117,12 +117,6 @@ function startRoomTimer(roomCode) {
   }, INACTIVE_TIMEOUT);
 }
 
-function getClientIP(socket) {
-  const fullIP = socket.handshake.headers['x-forwarded-for'] || socket.handshake.address;
-  // Nimm nur die erste IP aus der Liste
-  return fullIP.split(',')[0].trim();
-}
-
 // Socket.IO Event Handler
 io.on("connection", (socket) => {
   console.log("Neuer Client verbunden");
@@ -183,17 +177,9 @@ io.on("connection", (socket) => {
         throw new Error("Room is full (max 12 players)");
       }
 
-      // Zufälliger Name wenn leer oder nur Leerzeichen
       const playerName = data.playerName?.trim()
         ? data.playerName.trim()
         : getRandomName();
-
-      const clientIP = getClientIP(socket);
-      console.log('Join attempt:', {
-        ip: clientIP,
-        cachedPoints: playerPoints[clientIP],
-        roomCode: roomCode // Hier den bereinigten Code nutzen
-      });
 
       room.players[socket.id] = {
         id: socket.id,
@@ -204,14 +190,7 @@ io.on("connection", (socket) => {
         deviceId: data.deviceId
       };
 
-      // HIER den currentRoom setzen, nachdem alles validiert wurde
-      currentRoom = roomCode; // Auch hier den bereinigten Code nutzen
-
-      console.log('Player joined with points:', {
-        ip: clientIP,
-        points: room.players[socket.id].points,
-        cachedPoints: playerPoints[clientIP]
-      });
+      currentRoom = roomCode;
 
       socket.emit("join-success", { roomCode: roomCode });
 
@@ -221,7 +200,7 @@ io.on("connection", (socket) => {
         locked: false
       };
 
-      socket.join(roomCode); // Hier auch den bereinigten Code nutzen
+      socket.join(roomCode);
       io.to(roomCode).emit("player-list-update", room.players);
       socket.emit("gamemaster-note-update", { text: room.gamemasterNote });
       io.to(room.host).emit("notes-update", room.notes);
