@@ -1,11 +1,4 @@
-const socket = io(
-  {
-    reconnection: true,        // Automatische Wiederverbindung aktivieren
-    reconnectionAttempts: 10,  // Maximal 10 Versuche
-    reconnectionDelay: 1000,   // Start mit 1 Sekunde Verzögerung
-    reconnectionDelayMax: 5000 // Maximal 5 Sekunden Verzögerung
-  }
-);
+const socket = io();
 let isGamemaster = false;
 let currentRoomCode = null;
 let playerName = "";
@@ -13,11 +6,41 @@ let timerInterval = null;
 let currentAvatarId = 1;
 let soundEnabled = true;
 
+let reconnectAttempts = 0;
+let wasConnected = false;
+let lastRoomState = {
+  roomCode: null,
+  playerName: "",
+  isGamemaster: false,
+  avatarId: 1
+};
+
+function saveRoomState() {
+  lastRoomState = {
+    roomCode: currentRoomCode,
+    playerName: playerName,
+    isGamemaster: isGamemaster,
+    avatarId: currentAvatarId
+  };
+  // Speichere im localStorage für Browsertab-Schließungen
+  localStorage.setItem('gameRoomState', JSON.stringify(lastRoomState));
+}
+
+function restoreRoomState() {
+  const storedState = localStorage.getItem('gameRoomState');
+  if (storedState) {
+    lastRoomState = JSON.parse(storedState);
+  }
+  return lastRoomState;
+}
+
 function showGameInterface(roomCode, asGamemaster) {
   currentRoomCode = roomCode;
   document.getElementById("current-room").textContent = roomCode;
   const roomCodeElement = document.getElementById("current-room");
   roomCodeElement.textContent = roomCode;
+
+  saveRoomState();
 
   // Click-Handler für Copy-Funktion
   roomCodeElement.addEventListener("click", async () => {
@@ -652,6 +675,36 @@ socket.on("room-error", (error) => {
   alert(error);
 });
 
+socket.on('connect', () => {
+  console.log('Connected to server');
+  
+  // Entferne disconnect Banner falls vorhanden
+  const banner = document.getElementById('disconnect-banner');
+  if (banner) banner.remove();
+
+  if (wasConnected) {
+    // War vorher verbunden - Versuche Wiederherstellung
+    const state = restoreRoomState();
+    if (state.roomCode) {
+      console.log('Attempting to restore session...');
+      if (state.isGamemaster) {
+        socket.emit('create-room', {
+          playerName: state.playerName,
+          avatarId: state.avatarId
+        });
+      } else {
+        socket.emit('join-room', {
+          roomCode: state.roomCode,
+          playerName: state.playerName,
+          avatarId: state.avatarId
+        });
+      }
+    }
+  }
+  wasConnected = true;
+  reconnectAttempts = 0;
+});
+
 socket.on('disconnect', () => {
   console.log('Disconnected from server');
   // Optional: Visuelles Feedback für den Nutzer
@@ -675,36 +728,40 @@ socket.on('disconnect', () => {
   }
 });
 
-socket.on('reconnect', (attemptNumber) => {
-  console.log('Reconnected to server after', attemptNumber, 'attempts');
+socket.on('disconnect', (reason) => {
+  console.log('Disconnected from server:', reason);
+  saveRoomState();
   
-  // Entferne das Disconnect-Banner falls vorhanden
-  const banner = document.getElementById('disconnect-banner');
-  if (banner) banner.remove();
-  
-  // Automatisch wieder dem Raum beitreten
-  if (currentRoomCode) {
-    if (isGamemaster) {
-      socket.emit('create-room', { 
-        playerName: playerName,
-        avatarId: currentAvatarId 
-      });
-    } else {
-      socket.emit('join-room', {
-        roomCode: currentRoomCode,
-        playerName: playerName,
-        avatarId: currentAvatarId
-      });
-    }
-  }
+  // Zeige Disconnect Banner
+  showDisconnectBanner();
 });
 
-// Visuelle Rückmeldung für fehlgeschlagene Wiederverbindung
+socket.on('reconnect_attempt', (attemptNumber) => {
+  console.log('Reconnection attempt:', attemptNumber);
+  reconnectAttempts = attemptNumber;
+  updateDisconnectBanner();
+});
+
 socket.on('reconnect_failed', () => {
-  console.log('Failed to reconnect');
-  const banner = document.getElementById('disconnect-banner');
-  if (banner) {
-    banner.style.backgroundColor = '#ff0000';
-    banner.textContent = 'Connection lost. Please refresh the page.';
-  }
+  console.log('Failed to reconnect after all attempts');
+  showFailedReconnectBanner();
+});
+
+socket.on('disconnect', (reason) => {
+  console.log('Disconnected from server:', reason);
+  saveRoomState();
+  
+  // Zeige Disconnect Banner
+  showDisconnectBanner();
+});
+
+socket.on('reconnect_attempt', (attemptNumber) => {
+  console.log('Reconnection attempt:', attemptNumber);
+  reconnectAttempts = attemptNumber;
+  updateDisconnectBanner();
+});
+
+socket.on('reconnect_failed', () => {
+  console.log('Failed to reconnect after all attempts');
+  showFailedReconnectBanner();
 });
