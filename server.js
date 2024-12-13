@@ -42,6 +42,9 @@ const io = new Server(server, {
     origin: process.env.CORS_ORIGIN || "*",
     methods: ["GET", "POST"],
   },
+  
+  pingTimeout: 60000, // 60 Sekunden timeout
+  pingInterval: 25000, // Ping alle 25 Sekunden
 });
 
 process.on("uncaughtException", (error) => {

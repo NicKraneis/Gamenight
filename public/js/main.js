@@ -1,4 +1,11 @@
-const socket = io();
+const socket = io(
+  {
+    reconnection: true,        // Automatische Wiederverbindung aktivieren
+    reconnectionAttempts: 10,  // Maximal 10 Versuche
+    reconnectionDelay: 1000,   // Start mit 1 Sekunde Verzögerung
+    reconnectionDelayMax: 5000 // Maximal 5 Sekunden Verzögerung
+  }
+);
 let isGamemaster = false;
 let currentRoomCode = null;
 let playerName = "";
@@ -460,7 +467,7 @@ socket.on("buzzer-pressed", (data) => {
 socket.on("buzzers-released", () => {
   if (isGamemaster) {
     const buzzerStatus = document.getElementById("current-buzzer");
-    buzzerStatus.innerHTML = "<div>Buzzer sind freigegeben</div>";
+    buzzerStatus.innerHTML = "<div>Buzzers unlocked</div>";
     buzzerStatus.classList.add("buzzer-free");
   } else {
     const buzzer = document.getElementById("buzzer");
@@ -473,7 +480,7 @@ socket.on("buzzers-released", () => {
 socket.on("buzzers-locked", () => {
   if (isGamemaster) {
     const buzzerStatus = document.getElementById("current-buzzer");
-    buzzerStatus.innerHTML = "<div>Buzzer locked</div>";
+    buzzerStatus.innerHTML = "<div>Buzzers locked</div>";
     buzzerStatus.classList.add("buzzer-free");
   } else {
     const buzzer = document.getElementById("buzzer");
@@ -536,9 +543,21 @@ socket.on("timer-reset", () => {
   const playerDisplay = document.getElementById("timer-display-player");
   if (masterDisplay) masterDisplay.innerHTML = '';
   if (playerDisplay) playerDisplay.innerHTML = '';
-  // Textfeld wieder aktivieren
+
+  // Textfeld wieder aktivieren und locked-Klasse entfernen
   const playerNote = document.getElementById("player-note");
-  if (playerNote) playerNote.disabled = false;
+  if (playerNote) {
+    playerNote.disabled = false;
+    playerNote.classList.remove("locked");
+  }
+  
+  // Bei Gamemaster: locked-Klasse von allen Spieler-Notizen entfernen
+  if (isGamemaster) {
+    const playerNotes = document.querySelectorAll(".player-note-container textarea");
+    playerNotes.forEach(textarea => {
+      textarea.classList.remove("locked");
+    });
+  }
 });
 
 function updateTimerDisplay(seconds) {
@@ -567,7 +586,20 @@ function updateTimerDisplay(seconds) {
     const endMessage = '<div class="timer-time">Time\'s up!</div>';
     if (masterDisplay) masterDisplay.innerHTML = endMessage;
     if (playerDisplay) playerDisplay.innerHTML = endMessage;
-    if (playerNote) playerNote.disabled = true;
+    
+    // Spieler-Notiz sperren
+    if (playerNote) {
+      playerNote.disabled = true;
+      playerNote.classList.add("locked");
+    }
+    
+    // Bei Gamemaster: Alle Spieler-Notizen als gesperrt markieren
+    if (isGamemaster) {
+      const playerNotes = document.querySelectorAll(".player-note-container textarea");
+      playerNotes.forEach(textarea => {
+        textarea.classList.add("locked");
+      });
+    }
   }
 }
 
@@ -618,4 +650,61 @@ socket.on("all-answers-unlocked", () => {
 
 socket.on("room-error", (error) => {
   alert(error);
+});
+
+socket.on('disconnect', () => {
+  console.log('Disconnected from server');
+  // Optional: Visuelles Feedback für den Nutzer
+  const gameSection = document.getElementById('game-section');
+  if (gameSection) {
+    const disconnectBanner = document.createElement('div');
+    disconnectBanner.id = 'disconnect-banner';
+    disconnectBanner.style.cssText = `
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      background-color: #f2388f;
+      color: white;
+      text-align: center;
+      padding: 10px;
+      z-index: 1000;
+    `;
+    disconnectBanner.textContent = 'Connection lost. Reconnecting...';
+    gameSection.appendChild(disconnectBanner);
+  }
+});
+
+socket.on('reconnect', (attemptNumber) => {
+  console.log('Reconnected to server after', attemptNumber, 'attempts');
+  
+  // Entferne das Disconnect-Banner falls vorhanden
+  const banner = document.getElementById('disconnect-banner');
+  if (banner) banner.remove();
+  
+  // Automatisch wieder dem Raum beitreten
+  if (currentRoomCode) {
+    if (isGamemaster) {
+      socket.emit('create-room', { 
+        playerName: playerName,
+        avatarId: currentAvatarId 
+      });
+    } else {
+      socket.emit('join-room', {
+        roomCode: currentRoomCode,
+        playerName: playerName,
+        avatarId: currentAvatarId
+      });
+    }
+  }
+});
+
+// Visuelle Rückmeldung für fehlgeschlagene Wiederverbindung
+socket.on('reconnect_failed', () => {
+  console.log('Failed to reconnect');
+  const banner = document.getElementById('disconnect-banner');
+  if (banner) {
+    banner.style.backgroundColor = '#ff0000';
+    banner.textContent = 'Connection lost. Please refresh the page.';
+  }
 });

@@ -299,7 +299,7 @@ h4 {
 }
 
 #game-section {
-  grid-template-columns: auto 70%;
+  grid-template-columns: 30% auto;
   grid-template-rows: auto auto;
   grid-gap: 50px;
 }
@@ -480,15 +480,21 @@ h4 {
 }
 
 .gamemaster-note-section {
-  grid-column-start: 2;
-  grid-column-end: 3;
+  grid-column-start: 3;
+  grid-column-end: 4;
   grid-row-start: 2;
 }
 
 .spieler-textfelder {
   grid-column-start: 1;
-  grid-column-end: 2;
+  grid-column-end: 3;
   grid-row-start: 2;
+}
+
+#all-player-notes {
+  display: flex;
+  max-width: max-content;
+  flex-wrap: wrap;
 }
 
 #gamemaster-message {
@@ -713,10 +719,11 @@ h4 {
 
 .player-note-container {
   text-align: start;
-  margin: 0;
+  margin: 0 10px;
   border-radius: 4px;
   border-width: 1px;
   border-color: #2a2a42;
+
 }
 
 .player-note-header {
@@ -1012,4 +1019,252 @@ footer a:hover {
   font-weight: 800;
   src: url("../assets/fonts/bricolage-grotesque-v7-latin-800.woff2")
     format("woff2"); /* Chrome 36+, Opera 23+, Firefox 39+, Safari 12+, iOS 10+ */
+}
+
+
+/* Small devices such as large phones (768px and lesser) */
+@media (max-width: 768px) {
+
+  h1 {
+    font-family: "Monigue";
+    color: white;
+    font-size: 60px;
+    font-weight: normal;
+    margin-bottom: 50px;
+    text-align: center;
+  }
+
+  h2 {
+    font-family: "Monigue";
+    color: white;
+    font-size: 32px;
+    font-weight: normal;
+  }
+
+  h3 {
+    font-family: "Bricolage Grotesque";
+    color: white;
+    font-size: 24px;
+    font-weight: 600;
+  }
+
+  h4 {
+    font-family: "Bricolage Grotesque";
+    color: white;
+    font-size: 32px;
+    font-weight: 200;
+  }
+
+  p, a {
+    font-size: 32px;
+  }
+
+  .donate {
+    position: absolute;
+    left: 20px;
+    top: 50px;
+    width: 80px;
+  }
+
+  .log-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto auto auto auto auto auto auto auto;
+    grid-gap: 20px;
+  }
+
+  .log-button {
+    grid-column-start: 1;
+    grid-column-end: 2;
+    grid-row-start: 9;
+    grid-row-end: 10;
+  }
+
+  .gamemaster-avatar {
+    grid-column-start: 1;
+    grid-column-end: 2;
+    grid-row-start: 8;
+    grid-row-end: 9;
+  }
+
+  .or-heading {
+    grid-column-start: 1;
+    grid-column-end: 2;
+    grid-row-start: 6;
+    grid-row-end: 7;
+    margin: 20px 0;
+  }
+
+  .create-heading {
+    grid-column-start: 1;
+    grid-column-end: 2;
+    grid-row-start: 7;
+    grid-row-end: 8;
+  }
+
+  /* Container und Layout */
+
+  .container {
+    max-width: fit-content;
+    margin: 0 auto;
+    padding: 20px;
+  }
+
+  #game-section {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto auto;
+    grid-gap: 50px;
+    padding: 0;
+  }
+
+  #game-section h2 {
+    grid-column-start: 1;
+    grid-column-end: 2;
+  }
+
+  .inner-container {
+    grid-column-start: 1;
+    grid-column-end: 2;
+    grid-row-start: 2;
+    grid-row-end: 3;
+  }
+
+  #gamemaster-section {
+    grid-template-columns: 1fr;
+    grid-template-rows: 200px 200px 200px auto auto ;
+  }
+
+  .generator-controls {
+    grid-column-start: 1;
+    grid-column-end: 2;
+  }
+
+  .random-number-section-player {
+    text-align: center;
+    grid-row-start: 2;
+    grid-row-end: 3;
+  }
+
+  .controls-panel {
+    grid-column-start: 1;
+    grid-column-end: 2;
+    grid-row-start: 2;
+    grid-row-end: 3;
+  }
+
+  .gamemaster-note-section {
+    grid-column-start: 1;
+    grid-column-end: 2;
+    grid-row-start: 4;
+    grid-row-end: 5;
+  }
+
+  .spieler-textfelder {
+    grid-column-start: 1;
+    grid-column-end: 2;
+    grid-row-start: 5;
+    grid-row-end: 6;
+  }
+
+  #all-player-notes {
+    display: flex;
+    flex-direction: column;
+    max-width: 100%;
+    flex-grow: 1;
+  }
+
+  #gamemaster-message {
+    grid-column-start: 1;
+    grid-column-end: 3;
+    grid-row-start: 2;
+  }
+
+  .gamemaster-message {
+    grid-column-start: 1;
+    grid-column-end: 2;
+    grid-row-start: 5;
+    grid-row-end: 6;
+  }
+
+  #player-note-section {
+    grid-column-start: 1;
+    grid-column-end: 2;
+    grid-row-start: 4;
+    grid-row-end: 5;
+  }
+
+  .player-note-container {
+    text-align: start;
+    margin: 0 10px;
+    border-radius: 4px;
+    border-width: 1px;
+    border-color: #2a2a42;
+  }
+
+  /* Leaderboard Styles */
+  .leaderboard {
+    grid-row-start: 3;
+    grid-row-end: 4;
+  }
+
+  .leaderboard-item {
+    display: flex;
+    flex-direction: column;
+    flex-wrap: nowrap;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+
+  /* Utility Classes */
+
+  #player-section.game-section {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 200px 200px auto auto;
+  }
+
+  .buzzer {
+    grid-column-start: 1;
+    grid-column-end: 2;
+    grid-row-start: 1;
+    grid-row-end: 2;
+  }
+
+  /* Master */
+  .timer-section {
+    grid-column-start: 1;
+    grid-column-end: 2;
+    grid-row-start: 3;
+    grid-row-end: 4;
+  }
+
+  /* Player */
+  .timer-area {
+    text-align: center;
+    grid-column-start: 1;
+    grid-column-end: 2;
+    grid-row-start: 3;
+    grid-row-end: 4;
+
+    display: grid;
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto;
+  }
+
+  #timer-controls {
+    grid-column-start: 1;
+    grid-column-end: 4;
+    grid-row-start: 3;
+    grid-row-end: 4;
+  }
+
+
+  footer {
+    height: 50px;
+    align-items: center;
+  }
+
+  footer a {
+    font-size: 20px;
+  }
 }
