@@ -6,20 +6,6 @@ let timerInterval = null;
 let currentAvatarId = 1;
 let soundEnabled = true;
 
-socket.on('auto-rejoin', (cachedState) => {
-  console.log('Automatically rejoined game:', cachedState);
-  
-  // Setze globale Variablen
-  currentRoomCode = cachedState.roomCode;
-  playerName = cachedState.playerName;
-  isGamemaster = cachedState.isGamemaster;
-  currentAvatarId = cachedState.avatarId;
-  
-  // UI wiederherstellen
-  showGameInterface(cachedState.roomCode, cachedState.isGamemaster);
-});
-
-
 function showGameInterface(roomCode, asGamemaster) {
   currentRoomCode = roomCode;
   document.getElementById("current-room").textContent = roomCode;

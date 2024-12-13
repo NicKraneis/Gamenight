@@ -6,8 +6,7 @@ const helmet = require("helmet");
 require("dotenv").config();
 const fs = require("fs");
 const path = require("path");
-const playerCache = {}; // Speichert Spielerzustände nach IP
-const roomPlayerIPs = {}; // Speichert IPs pro Raum für einfacheres Cleanup
+const playerPoints = {}; // Speichert Punkte nach IP
 
 // Rate Limiter konfigurieren
 const limiter = rateLimit({
@@ -36,7 +35,7 @@ app.use(
 app.use(express.static("public"));
 
 // Server Konfiguration
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 10000;
 const NODE_ENV = process.env.NODE_ENV || "development";
 
 const io = new Server(server, {
@@ -102,8 +101,6 @@ setInterval(cleanupRooms, 30 * 60 * 1000); // Alle 30 Minuten
 function deleteRoom(roomCode) {
   console.log(`Deleting room ${roomCode}`);
   io.to(roomCode).emit("room-closed");
-  // Cache für den Raum löschen
-  clearRoomCache(roomCode);
   delete rooms[roomCode];
 }
 
@@ -120,50 +117,15 @@ function startRoomTimer(roomCode) {
   }, INACTIVE_TIMEOUT);
 }
 
-
-// Helper Funktion zum Abrufen der IP
+// Helper Funktion
 function getClientIP(socket) {
   return socket.handshake.headers['x-forwarded-for'] || socket.handshake.address;
-}
-
-// Cache Management Funktionen
-function clearPlayerCache(clientIP) {
-  delete playerCache[clientIP];
-}
-
-function clearRoomCache(roomCode) {
-  // Lösche Cache aller Spieler in diesem Raum
-  if (roomPlayerIPs[roomCode]) {
-    roomPlayerIPs[roomCode].forEach(ip => {
-      clearPlayerCache(ip);
-    });
-    delete roomPlayerIPs[roomCode];
-  }
-}
-
-function addPlayerToRoomCache(roomCode, clientIP) {
-  if (!roomPlayerIPs[roomCode]) {
-    roomPlayerIPs[roomCode] = new Set();
-  }
-  roomPlayerIPs[roomCode].add(clientIP);
 }
 
 // Socket.IO Event Handler
 io.on("connection", (socket) => {
   console.log("Neuer Client verbunden");
   let currentRoom = null;
-  // ClientIP hier am Anfang des Connection Handlers definieren
-  const clientIP = getClientIP(socket);
-
-  // Prüfe auf existierenden Cache gleich bei Verbindung
-  if (playerCache[clientIP]) {
-    const cachedState = playerCache[clientIP];
-    const room = rooms[cachedState.roomCode];
-    
-    if (room) {
-      handleCachedConnection(socket, room, cachedState);
-    }
-  }
 
   // Event Handler für create-room
   socket.on("create-room", (data) => {
@@ -171,9 +133,6 @@ io.on("connection", (socket) => {
       if (!data?.playerName?.trim()) {
         throw new Error("Invalid player name");
       }
-
-      // Den Cache für diese IP löschen
-      clearPlayerCache(clientIP);
 
       const roomCode = generateRoomCode();
       rooms[roomCode] = {
@@ -193,16 +152,6 @@ io.on("connection", (socket) => {
 
       currentRoom = roomCode;
       socket.join(roomCode);
-
-      // Cache für diese IP erstellen
-      playerCache[clientIP] = {
-        roomCode: roomCode,
-        playerName: data.playerName,
-        avatarId: data.avatarId,
-        isGamemaster: true
-      };
-      
-      addPlayerToRoomCache(roomCode, clientIP);
 
       socket.emit("room-created", { roomCode });
       startRoomTimer(roomCode);
@@ -235,10 +184,13 @@ io.on("connection", (socket) => {
         : getRandomName();
 
       currentRoom = data.roomCode;
+
+      const clientIP = getClientIP(socket);
+
       room.players[socket.id] = {
         id: socket.id,
-        name: playerName, // Hier wird der zufällige Name verwendet
-        points: 0,
+        name: playerName,
+        points: playerPoints[clientIP] || 0,
         isHost: false,
         avatarId: data.avatarId,
       };
@@ -416,12 +368,20 @@ io.on("connection", (socket) => {
     try {
       const { roomCode, playerId, points } = data;
       const room = rooms[roomCode];
-
+  
       if (room && room.host === socket.id) {
         // Prüft ob der Sender der Host ist
         room.players[playerId].points += points;
+        
+        // Punkte für die IP des Spielers cachen
+        const playerSocket = io.sockets.sockets.get(playerId);
+        if (playerSocket) {
+          const clientIP = getClientIP(playerSocket);
+          playerPoints[clientIP] = room.players[playerId].points;
+        }
+        
         io.to(roomCode).emit("player-list-update", room.players);
-        console.log(`Updated points for player ${playerId}: ${points}`); // Debug-Log
+        console.log(`Updated points for player ${playerId}: ${points}`);
       }
     } catch (error) {
       console.error("Update points error:", error);
@@ -503,34 +463,6 @@ io.on("connection", (socket) => {
   });
 
 });
-
-function handleCachedConnection(socket, room, cachedState) {
-  socket.join(cachedState.roomCode);
-  
-  if (cachedState.isGamemaster) {
-    room.host = socket.id;
-  } else {
-    room.players[socket.id] = {
-      id: socket.id,
-      name: cachedState.playerName,
-      points: cachedState.points || 0,
-      isHost: false,
-      avatarId: cachedState.avatarId
-    };
-    
-    room.notes[socket.id] = {
-      text: cachedState.noteText || "",
-      playerName: cachedState.playerName,
-      locked: false
-    };
-  }
-  
-  socket.emit('auto-rejoin', cachedState);
-  io.to(cachedState.roomCode).emit('player-list-update', room.players);
-  if (!cachedState.isGamemaster) {
-    io.to(room.host).emit('notes-update', room.notes);
-  }
-}
 
 // Server starten
 server.listen(PORT, () => {
